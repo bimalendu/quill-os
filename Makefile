@@ -20,7 +20,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -38,6 +38,7 @@ help:
 	@echo "  make check-firefox  run the image's Firefox headless and assert the no-AI policy"
 	@echo "  make check-group-packages  check the setup groups name real aarch64 packages (network)"
 	@echo "  make check-setup-helper  test the group installer as root with real dnf"
+	@echo "  make check-setup-app  install the quill-setup RPM and test it (autostart, files)"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
@@ -133,9 +134,14 @@ check-group-packages:
 
 # Test the privileged installer as root with real dnf (changes only the throwaway container).
 check-setup-helper:
-	COPYFILE_DISABLE=1 tar -cf - -C packages/quill-setup quill-setup-helper groups -C ../.. tests/test-setup-helper.sh | \
+	COPYFILE_DISABLE=1 tar -cf - -C packages/quill-setup/src quill-setup-helper groups -C ../../.. tests/test-setup-helper.sh | \
 		$(PODMAN) run --rm -i $(BUILDER_IMAGE) \
 		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/tests/test-setup-helper.sh'
+
+# Install the built quill-setup RPM in a clean container and test it, including autostart.
+check-setup-app:
+	$(PODMAN) run --rm -i -v $(RPMVOL):/repo:ro $(BUILDER_IMAGE) \
+		sh -c 'cat > /tmp/t.sh; sh /tmp/t.sh' < tests/test-setup-app.sh
 
 fetch-image:
 	mkdir -p out
@@ -149,6 +155,9 @@ rpms:
 	rm -rf out/stage && mkdir -p out/stage
 	cp -R packages/. out/stage/
 	cp policy/ai-denylist.txt out/stage/quill-no-ai/ai-denylist.txt
+	# quill-setup ships a source tarball built from its src/ tree.
+	tar -czf out/stage/quill-setup/quill-setup-44.tar.gz -s ',^src,quill-setup-44,' -C packages/quill-setup src
+	rm -rf out/stage/quill-setup/src
 	COPYFILE_DISABLE=1 tar -C out/stage -cf - . | $(PODMAN) run --rm -i \
 		-v $(KEYVOL):/keys -v $(RPMVOL):/repo $(BUILDER_IMAGE) \
 		sh -c 'mkdir /src && tar -C /src -xf - && build-rpms'

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Quill Setup
+Comment=First-login software selection
+Exec=quill-setup --autostart
+Icon=quill-logo-icon
+Terminal=false
+NoDisplay=true
+OnlyShowIn=KDE;
+X-KDE-autostart-after=panel

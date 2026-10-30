@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Validate the Quill Setup package group definitions (packages/quill-setup/groups/*.json).
+"""Validate the Quill Setup package group definitions (packages/quill-setup/src/groups/*.json).
 
 Structure only, and the AI denylist. Whether the packages exist is checked
 against the live repositories by `make check-group-packages`.
 
-Usage: check-groups.py [groups-dir]   (default packages/quill-setup/groups)
+Usage: check-groups.py [groups-dir]   (default packages/quill-setup/src/groups)
 Prints the group contents as '--rpms' / '--flatpaks' input files when given
 --dump DIR, so check-denylist.sh can scan them.
 """
@@ -19,7 +19,7 @@ if "--dump" in args:
     i = args.index("--dump")
     dump = Path(args[i + 1])
     del args[i:i + 2]
-root = Path(args[0]) if args else Path(__file__).resolve().parent.parent / "packages/quill-setup/groups"
+root = Path(args[0]) if args else Path(__file__).resolve().parent.parent / "packages/quill-setup/src/groups"
 
 errors = []
 ids, orders, rpms, flatpaks = set(), set(), [], []

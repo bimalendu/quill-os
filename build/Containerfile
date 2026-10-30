@@ -23,6 +23,18 @@ RUN dnf -y install \
         ImageMagick \
         gawk \
         flatpak \
+        cmake \
+        gcc-c++ \
+        qt6-qtbase-devel \
+        qt6-qtdeclarative-devel \
+        qt6-qtsvg \
+        kf6-kirigami \
+        kf6-qqc2-desktop-style \
+        breeze-icon-theme \
+        dejavu-sans-fonts \
+        dejavu-sans-mono-fonts \
+        polkit \
+        desktop-file-utils \
     && dnf clean all
 
 COPY build-rpms.sh /usr/local/bin/build-rpms

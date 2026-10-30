@@ -42,6 +42,10 @@ case "$profile" in
             && ok "default look and feel is org.quill.desktop" || bad "default look and feel is not org.quill.desktop"
         grep -q "wallpapers/Quill" "$root/usr/lib/plasmalogin/defaults.conf" \
             && ok "login screen wallpaper is Quill" || bad "login screen wallpaper is not Quill"
+        [ -x "$root/usr/libexec/quill-setup-helper" ] && ok "Quill Setup helper installed" || bad "Quill Setup helper missing"
+        [ -f "$root/etc/xdg/autostart/quill-setup.desktop" ] && ok "Quill Setup starts at first login" || bad "Quill Setup autostart missing"
+        [ -f "$root/usr/share/polkit-1/actions/org.quill.setup.policy" ] && ok "Quill Setup polkit policy installed" || bad "Quill Setup polkit policy missing"
+        [ "$(ls "$root"/usr/share/quill-setup/groups/*.json 2>/dev/null | wc -l | tr -d ' ')" = 5 ] && ok "5 Quill Setup groups installed" || bad "Quill Setup groups missing"
         [ -f "$root/usr/share/wallpapers/Quill/metadata.json" ] && ok "Quill wallpaper installed" || bad "Quill wallpaper missing"
         [ -f "$root/usr/share/color-schemes/QuillLight.colors" ] && ok "Quill colour schemes installed" || bad "Quill colour scheme missing" ;;
 esac

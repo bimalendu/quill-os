@@ -27,6 +27,9 @@ sh tests/test-denylist.sh >/dev/null && ok "denylist self-test" || bad "denylist
 python3 tests/check-groups.py >/dev/null && ok "setup groups are well formed" || bad "setup groups are malformed"
 sh tests/test-groups.sh >/dev/null && ok "groups self-test" || bad "groups self-test"
 
+d=$(mktemp -d); python3 tests/check-groups.py --dump "$d" >/dev/null && sh tests/check-denylist.sh policy/ai-denylist.txt --rpms "$d/rpms" --flatpaks "$d/flatpaks" >/dev/null \
+    && ok "no setup group contains a denylisted package" || bad "a setup group contains a denylisted package"; rm -rf "$d"
+
 make -n help >/dev/null 2>&1 && ok "Makefile parses" || bad "Makefile does not parse"
 
 exit "$fail"

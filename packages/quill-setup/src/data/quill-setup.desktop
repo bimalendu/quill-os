@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Quill Setup
+Comment=Choose extra software to install
+Exec=quill-setup
+Icon=quill-logo-icon
+Terminal=false
+Categories=System;
+Keywords=install;software;packages;developer;
+StartupNotify=true
