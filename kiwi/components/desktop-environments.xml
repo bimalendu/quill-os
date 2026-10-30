@@ -1,0 +1,51 @@
+<image>
+	<profiles>
+		<profile name="DesktopCommon" description="Common desktop packages">
+			<requires profile="Common"/>
+		</profile>
+		<profile name="GNOME-Desktop" description="GNOME Desktop">
+			<requires profile="DesktopCommon"/>
+		</profile>
+		<profile name="KDE-Desktop" description="KDE Plasma Desktop">
+			<requires profile="DesktopCommon"/>
+		</profile>
+	</profiles>
+	<packages type="image" patternType="plusRecommended" profiles="DesktopCommon">
+		<namedCollection name="firefox"/>
+		<namedCollection name="fonts"/>
+		<namedCollection name="input-methods"/>
+		<namedCollection name="libreoffice"/>
+		<namedCollection name="multimedia"/>
+		<namedCollection name="printing"/>
+		<namedCollection name="x86-emulation"/>
+		<package name="aajohan-comfortaa-fonts"/>
+		<package name="mediawriter"/>
+		<package name="mesa-dri-drivers"/>
+		<package name="mesa-vulkan-drivers"/>
+		<package name="plymouth-system-theme"/>
+		<ignore name="@dial-up"/>
+		<ignore name="@guest-desktop-agents"/>
+		<ignore name="xorg-x11-server-Xorg"/>
+	</packages>
+	<packages type="bootstrap" patternType="plusRecommended" profiles="GNOME-Desktop">
+		<package name="fedora-release-workstation"/>
+	</packages>
+	<packages type="image" patternType="plusRecommended" profiles="GNOME-Desktop">
+		<namedCollection name="workstation-product-environment"/>
+	</packages>
+	<packages type="bootstrap" patternType="plusRecommended" profiles="KDE-Desktop">
+		<package name="fedora-release-kde"/>
+	</packages>
+	<packages type="image" patternType="plusRecommended" profiles="KDE-Desktop">
+		<namedCollection name="kde-desktop-environment"/>
+		<namedCollection name="kde-apps"/>
+		<namedCollection name="kde-media"/>
+		<namedCollection name="kde-pim"/>
+		<package name="fuse"/>
+		<package name="kde-l10n"/>
+		<ignore name="@admin-tools"/>
+		<ignore name="initial-setup"/> <!-- redundant with plasma-setup -->
+		<ignore name="gnome-disk-utility"/>
+		<ignore name="system-config-printer"/>
+	</packages>
+</image>

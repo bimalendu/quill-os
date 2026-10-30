@@ -1,0 +1,32 @@
+<image>
+	<profiles>
+		<profile name="Common" description="Common packages"/>
+	</profiles>
+	<packages type="image" patternType="plusRecommended" profiles="Common">
+		<namedCollection name="core"/>
+		<namedCollection name="standard"/>
+		<namedCollection name="hardware-support"/>
+		<package name="NetworkManager-wifi"/>
+		<package name="chrony"/>
+		<package name="glibc-all-langpacks"/>
+		<ignore name="dracut-config-rescue"/>
+		<ignore name="generic-release*"/>
+		<ignore name="generic-logos*"/>
+		<!-- pulled in as Recommends: via toolbox -> podman -> containers-common-extra -->
+		<ignore name="qemu-user-static"/>
+		<!-- ignore *-firmware packages which are unlikely to be used -->
+		<ignore name="amd-gpu-firmware"/>
+		<ignore name="amd-ucode-firmware"/>
+		<ignore name="intel-audio-firmware"/>
+		<ignore name="intel-gpu-firmware"/>
+		<ignore name="iwlwifi-mvm-firmware"/>
+		<ignore name="nvidia-gpu-firmware"/>
+		<ignore name="qcom-firmware"/>
+		<!-- Asahi packages -->
+		<package name="alsa-ucm-asahi"/>
+		<package name="asahi-platform-metapackage"/>
+		<package name="asahi-repos"/>
+		<package name="fedora-asahi-remix-scripts"/>
+		<package name="tiny-dfr"/>
+	</packages>
+</image>

@@ -1,0 +1,23 @@
+<image>
+	<profiles>
+		<profile name="BootCore" description="Boot core packages"/>
+	</profiles>
+	<packages type="bootstrap" patternType="plusRecommended" profiles="BootCore">
+		<package name="grubby"/>
+	</packages>
+	<packages type="image" patternType="plusRecommended" profiles="BootCore">
+		<package name="grub2-efi-aa64" arch="aarch64"/>
+		<package name="grub2-efi-aa64-modules" arch="aarch64"/>
+		<package name="shim-signed-aa64" arch="aarch64"/>
+		<package name="grub2-efi-aa64" arch="aarch64"/>
+		<package name="uboot-images-armv8" arch="aarch64"/>
+		<package name="kernel-16k"/>
+		<package name="kernel-16k-modules-extra"/>
+		<package name="systemd-oomd-defaults"/>
+		<package name="systemd-resolved"/>
+		<!-- Asahi packages -->
+		<package name="asahi-fwupdate" arch="aarch64"/>
+		<package name="dracut-asahi" arch="aarch64"/>
+		<package name="update-m1n1" arch="aarch64"/>
+	</packages>
+</image>

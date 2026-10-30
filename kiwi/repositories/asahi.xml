@@ -1,0 +1,27 @@
+<image>
+	<repository type="rpm-md" alias="copr_copr.fedorainfracloud.org_group_asahi_u-boot" sourcetype="baseurl" priority="1">
+		<source path="https://download.copr.fedorainfracloud.org/results/@asahi/u-boot/fedora-$releasever-$basearch/">
+			<signing key="https://download.copr.fedorainfracloud.org/results/@asahi/u-boot/pubkey.gpg"/>
+		</source>
+	</repository>
+        <repository type="rpm-md" alias="copr_copr.fedorainfracloud.org_group_asahi_fedora-remix-branding" sourcetype="baseurl" priority="1">
+		<source path="https://download.copr.fedorainfracloud.org/results/@asahi/fedora-remix-branding/fedora-$releasever-$basearch/">
+			<signing key="https://download.copr.fedorainfracloud.org/results/@asahi/fedora-remix-branding/pubkey.gpg"/>
+		</source>
+	</repository>
+        <repository type="rpm-md" alias="copr_copr.fedorainfracloud.org_group_asahi_fedora-remix-scripts" sourcetype="baseurl" priority="5">
+		<source path="https://download.copr.fedorainfracloud.org/results/@asahi/fedora-remix-scripts/fedora-$releasever-$basearch/">
+			<signing key="https://download.copr.fedorainfracloud.org/results/@asahi/fedora-remix-scripts/pubkey.gpg"/>
+		</source>
+	</repository>
+	<repository type="rpm-md" alias="copr_copr.fedorainfracloud.org_group_asahi_kernel" sourcetype="baseurl" priority="5">
+		<source path="https://download.copr.fedorainfracloud.org/results/@asahi/kernel/fedora-$releasever-$basearch/">
+			<signing key="https://download.copr.fedorainfracloud.org/results/@asahi/kernel/pubkey.gpg"/>
+		</source>
+	</repository>
+	<repository type="rpm-md" alias="fedora-asahi-remix-hotfixes" priority="1">
+		<source path="https://fedora-asahi-remix.org/repos/hotfixes/$releasever/">
+			<signing key="file:///usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-$releasever-primary"/>
+		</source>
+	</repository>
+</image>

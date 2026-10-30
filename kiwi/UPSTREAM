@@ -1,0 +1,5 @@
+repo: https://pagure.io/fedora-asahi/kiwi-descriptions.git
+branch: f44
+commit: 960ea8dc8fb33952a874bb4da94a07a055bb11ab
+imported: 2026-10-30
+license: GPL-3.0-or-later

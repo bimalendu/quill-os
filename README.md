@@ -5,7 +5,7 @@ Quill OS is a thin fork of [Fedora Asahi Remix](https://fedora-asahi-remix.org/)
 with KDE Plasma. It adds no drivers of its own: kernel, GPU, audio and firmware
 support come unchanged from the Asahi Linux project and Fedora.
 
-Status: **Phase 1 of 8** (build scaffold). Nothing is installable yet.
+Status: **Phase 2 of 8** (kiwi fork in progress). Nothing is installable yet.
 
 ## Targets
 
@@ -27,4 +27,5 @@ naming the phase that implements them.
 
 ## License
 
-GPL-2.0-or-later for scripts and specs. See `LICENSE`.
+GPL-3.0-or-later, matching the upstream Fedora Asahi kiwi descriptions this
+repo forks. See `LICENSE`. Upstream provenance is recorded in `kiwi/UPSTREAM`.

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<image schemaversion="7.4" name="Fedora-Asahi-Remix" displayname="Fedora Linux Asahi Remix">
+	<description type="system">
+		<author>Neal Gompa</author>
+		<contact>ngompa@fedoraproject.org</contact>
+		<specification>Fedora Asahi Remix</specification>
+	</description>
+	<preferences>
+		<version>0.0.0</version>
+		<packagemanager>dnf5</packagemanager>
+		<locale>en_US</locale>
+		<keytable>us</keytable>
+		<timezone>UTC</timezone>
+		<rpm-check-signatures>true</rpm-check-signatures>
+		<release-version>44</release-version>
+	</preferences>
+	<include from="this://./repositories/core.xml"/>
+	<include from="this://./repositories/asahi.xml"/>
+	<include from="this://./components/boot.xml"/>
+	<include from="this://./components/base.xml"/>
+	<include from="this://./components/desktop-environments.xml"/>
+	<include from="this://./components/users.xml"/>
+	<include from="this://./platforms/minimal.xml"/>
+	<include from="this://./platforms/server.xml"/>
+	<include from="this://./platforms/workstation.xml"/>
+	<packages type="bootstrap">
+		<package name="basesystem"/>
+		<package name="filesystem"/>
+	</packages>
+</image>
