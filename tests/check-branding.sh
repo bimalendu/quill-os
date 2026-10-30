@@ -20,8 +20,6 @@ eq "os-release ID_LIKE" "$(get ID_LIKE)" "fedora"
 eq "os-release LOGO"    "$(get LOGO)"    "quill-logo-icon"
 grep -q "^REDHAT_" "$osr" && bad "os-release routes bugs to Red Hat (REDHAT_* fields)" || ok "no REDHAT_* fields in os-release"
 grep -qi "fedora asahi remix\|fedora linux" "$osr" && bad "os-release still mentions Fedora" || ok "os-release does not mention Fedora"
-[ -f "$root/usr/share/icons/hicolor/48x48/places/start-here.png" ] && ok "start-here icon present" || bad "start-here icon missing"
-[ -f "$root/usr/share/pixmaps/system-logo-white.png" ] && ok "system-logo-white.png present" || bad "system-logo-white.png missing"
 
 # Nothing may phone home to Fedora by default.
 if grep -rIl "fedoraproject.org" "$root/etc/NetworkManager" "$root/usr/lib/NetworkManager" 2>/dev/null | grep -q .; then
@@ -38,6 +36,8 @@ n=$(find "$root/usr/share" \( -iname 'fedora-logo*' -o -iname 'fedora_logo*' -o 
 
 case "$profile" in
     *KDE*)
+        [ -f "$root/usr/share/icons/hicolor/48x48/places/start-here.png" ] && ok "start-here icon present" || bad "start-here icon missing"
+        [ -f "$root/usr/share/pixmaps/system-logo-white.png" ] && ok "system-logo-white.png present" || bad "system-logo-white.png missing"
         grep -q "^LookAndFeelPackage=org.quill.desktop" "$root/etc/xdg/kdeglobals" \
             && ok "default look and feel is org.quill.desktop" || bad "default look and feel is not org.quill.desktop"
         grep -q "wallpapers/Quill" "$root/usr/lib/plasmalogin/defaults.conf" \

@@ -13,11 +13,11 @@ must_not() { have "$1" && { printf 'FAIL  unexpected %s\n' "$1"; fail=1; } || pr
 
 # Asahi hardware stack: Quill never drops these.
 for p in kernel-16k-core asahi-platform-metapackage asahi-audio speakersafetyd \
-         tiny-dfr m1n1 update-m1n1 mesa-dri-drivers mesa-vulkan-drivers \
+         tiny-dfr m1n1 update-m1n1 mesa-dri-drivers \
          alsa-ucm-asahi dracut-asahi; do must "$p"; done
 
 # Quill's own branding packages, and none of the Fedora or Asahi ones they replace.
-for p in quill-release-common quill-logos; do must "$p"; done
+for p in quill-release-common; do must "$p"; done
 for p in fedora-logos fedora-release-common fedora-release-kde fedora-release-identity-kde \
          fedora-asahi-remix-release-common fedora-asahi-remix-release-kde-desktop \
          fedora-bookmarks abrt abrt-desktop libreport-fedora mediawriter \
@@ -33,7 +33,8 @@ case "$profile" in
     *KDE*)
         for p in plasma-desktop plasma-setup plasma-login-manager dolphin konsole kwrite okular \
                  kcalc gwenview firefox quill-release-kde-desktop quill-release-identity-kde-desktop \
-                 quill-backgrounds-kde quill-plasma-theme; do must "$p"; done
+                 quill-backgrounds-kde quill-plasma-theme quill-logos \
+                 mesa-vulkan-drivers; do must "$p"; done
         for p in f44-backgrounds-kde f44-backgrounds-base desktop-backgrounds-kde \
                  breeze-icon-theme-fedora plasma-welcome-fedora kde-settings-plasmalogin; do
             must_not "$p"; done ;;
