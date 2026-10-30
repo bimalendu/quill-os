@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <clipPath id="body"><path d="M210 42C126 46 74 100 66 192C150 186 206 130 210 42Z"/></clipPath>
+    <mask id="cuts">
+      <rect width="256" height="256" fill="#fff"/>
+      <g clip-path="url(#body)" fill="none" stroke="#000" stroke-linecap="round">
+        <path stroke-width="8" d="M86 188L194 60"/>
+        <path stroke-width="5" d="M114 154L108 128M133 132L127 106M153 110L147 84M172 88L166 62"/>
+        <path stroke-width="5" d="M114 154L142 150M133 132L162 128M153 110L180 106M172 88L196 84"/>
+      </g>
+    </mask>
+  </defs>
+  <g fill="#FFFFFF" mask="url(#cuts)">
+    <path d="M210 42C126 46 74 100 66 192C150 186 206 130 210 42Z"/>
+  </g>
+  <path fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" d="M56 214L90 176"/>
+</svg>

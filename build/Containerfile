@@ -20,6 +20,8 @@ RUN dnf -y install \
         redhat-rpm-config \
         systemd-rpm-macros \
         librsvg2-tools \
+        ImageMagick \
+        gawk \
     && dnf clean all
 
 COPY build-rpms.sh /usr/local/bin/build-rpms
