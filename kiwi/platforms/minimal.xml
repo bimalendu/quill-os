@@ -17,6 +17,10 @@
 			</oemconfig>
 		</type>
 	</preferences>
+	<packages type="bootstrap" patternType="plusRecommended" profiles="Minimal">
+		<package name="quill-release"/>
+		<package name="quill-release-identity-basic"/>
+	</packages>
 	<packages type="image" patternType="plusRecommended" profiles="Minimal">
 		<package name="quill-release"/>
 		<package name="quill-release-identity-basic"/>

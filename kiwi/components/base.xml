@@ -24,8 +24,8 @@
 		<ignore name="gnome-abrt"/>
 		<!-- libreport-filesystem stays: mdadm requires it. It only owns directories. -->
 		<ignore name="libreport-fedora"/>
-		<ignore name="satyr"/>
-		<ignore name="python3-satyr"/>
+		<!-- satyr and python3-libreport stay: initial-setup (Minimal) -> anaconda-tui ->
+		     python3-meh -> python3-libreport -> satyr. Only ABRT pulls them otherwise. -->
 		<ignore name="NetworkManager-config-connectivity-fedora"/>
 		<!-- pulled in as Recommends: via toolbox -> podman -> containers-common-extra -->
 		<ignore name="qemu-user-static"/>
