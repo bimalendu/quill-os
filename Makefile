@@ -7,12 +7,17 @@ PROFILE        ?= Workstation-KDE
 # Images are built on a named volume inside the podman machine: kiwi needs
 # loop devices and a real filesystem, which a macOS bind mount cannot give.
 OUTVOL         ?= quill-out
+# The kiwi description is copied into this volume before each build. Reading
+# it straight from the macOS bind mount fails: the mount carries no SELinux
+# labels, and kiwi's `rsync -X` then tries to strip the label from the copy,
+# which SELinux never allows.
+SRCVOL         ?= quill-src
 
 # The rootful connection of the dedicated machine, so the user's default
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -58,14 +63,19 @@ kiwi-version:
 	$(PODMAN) run --rm --privileged $(BUILDER_IMAGE) \
 		sh -c 'out=$$(kiwi-ng --version 2>&1); echo "$$out"; echo "$$out" | grep -q "^KIWI"'
 
-KIWI_RUN = $(PODMAN) run --rm --privileged -v "$(CURDIR)/kiwi":/code:ro,z -v $(OUTVOL):/out $(BUILDER_IMAGE)
+KIWI_RUN = $(PODMAN) run --rm --privileged -v $(SRCVOL):/code:ro -v $(OUTVOL):/out $(BUILDER_IMAGE)
 
 # kiwi cannot list profiles without a type, so read the XML directly.
 profiles:
 	@grep -rhoE '<profile name="[^"]+" description="[^"]*"' kiwi --include='*.xml' \
 		| sed -E 's/<profile name="([^"]+)" description="([^"]*)"/\1\t\2/' | sort
 
-image:
+sync-src:
+	-$(PODMAN) volume rm -f $(SRCVOL) >/dev/null
+	$(PODMAN) volume create $(SRCVOL) >/dev/null
+	COPYFILE_DISABLE=1 tar -C kiwi -cf - . | $(PODMAN) run --rm -i -v $(SRCVOL):/code $(BUILDER_IMAGE) tar -C /code -xf -
+
+image: sync-src
 	$(KIWI_RUN) kiwi-ng --debug --type=oem --profile=$(PROFILE) --color-output \
 		system build --description /code --target-dir /out/$(PROFILE)
 
