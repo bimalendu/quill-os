@@ -1,0 +1,18 @@
+# Build environment for Quill OS images and RPMs.
+# Runs kiwi-ng the way the Fedora Asahi Remix project does: inside a
+# privileged Fedora aarch64 container.
+ARG FEDORA_RELEASE=44
+FROM registry.fedoraproject.org/fedora:${FEDORA_RELEASE}
+
+RUN dnf -y install \
+        kiwi-cli \
+        kiwi-systemdeps \
+        git \
+        rpm-build \
+        rpmdevtools \
+        jq \
+        zip \
+        curl \
+    && dnf clean all
+
+WORKDIR /work

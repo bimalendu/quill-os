@@ -1,0 +1,6 @@
+out/
+*.raw
+*.qcow2
+*.vmdk
+*.zip
+.DS_Store
