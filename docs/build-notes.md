@@ -113,4 +113,11 @@ Fedora's Plasma session sets
 - `make check-branding PROFILE=...` mounts the built image and asserts
   `os-release`, leftover `fedora-logo*` files, the default look and feel, the
   login wallpaper and that nothing contacts Fedora by default.
-- Branded `Workstation-KDE`: 1995 packages (trimmed, pre-branding: 2049).
+- Final Phase 3 results: `Workstation-KDE` 2004 packages (baseline 2251, trimmed
+  before branding 2049); `Minimal` 818 packages. Both pass `check-image` and
+  `check-branding`.
+- `satyr` and `python3-libreport` stay in the image: Minimal's `initial-setup`
+  needs them (initial-setup -> anaconda-tui -> python3-meh -> python3-libreport
+  -> satyr). The KDE image also gets them. ABRT itself is not installed.
+- Minimal needs its own bootstrap `quill-release`, as KDE does, or dnf
+  bootstraps Fedora Asahi Remix's release package and then conflicts.
