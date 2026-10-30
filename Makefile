@@ -17,7 +17,7 @@ SRCVOL         ?= quill-src
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -29,6 +29,7 @@ help:
 	@echo "  make kiwi-version   run kiwi-ng --version in the builder (toolchain check)"
 	@echo "  make profiles       list kiwi profiles in kiwi/"
 	@echo "  make image          build the kiwi image for PROFILE=$(PROFILE)"
+	@echo "  make check-image    assert package expectations on the built image"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build Quill RPMs                  (Phase 3)"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
@@ -80,6 +81,11 @@ sync-src:
 image: sync-src
 	$(KIWI_RUN) kiwi-ng --debug --type=oem --profile=$(PROFILE) --color-output \
 		system build --description /code --target-dir /out/$(PROFILE)
+
+# Assert the built image's package list; PROFILE selects the expectations.
+check-image:
+	$(PODMAN) run --rm -i -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'cat > /tmp/c.sh; sh /tmp/c.sh /out/$(PROFILE)/*.packages $(PROFILE)' < tests/check-packages.sh
 
 fetch-image:
 	mkdir -p out

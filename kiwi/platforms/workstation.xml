@@ -4,10 +4,6 @@
 			<requires profile="BootCore"/>
 			<requires profile="DesktopCommon"/>
 		</profile>
-		<profile name="Workstation-GNOME" description="Workstation with GNOME Desktop">
-			<requires profile="WorkstationCommon"/>
-			<requires profile="GNOME-Desktop"/>
-		</profile>
 		<profile name="Workstation-KDE" description="Workstation with KDE Desktop">
 			<requires profile="WorkstationCommon"/>
 			<requires profile="KDE-Desktop"/>

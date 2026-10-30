@@ -3,9 +3,6 @@
 		<profile name="DesktopCommon" description="Common desktop packages">
 			<requires profile="Common"/>
 		</profile>
-		<profile name="GNOME-Desktop" description="GNOME Desktop">
-			<requires profile="DesktopCommon"/>
-		</profile>
 		<profile name="KDE-Desktop" description="KDE Plasma Desktop">
 			<requires profile="DesktopCommon"/>
 		</profile>
@@ -14,7 +11,6 @@
 		<namedCollection name="firefox"/>
 		<namedCollection name="fonts"/>
 		<namedCollection name="input-methods"/>
-		<namedCollection name="libreoffice"/>
 		<namedCollection name="multimedia"/>
 		<namedCollection name="printing"/>
 		<namedCollection name="x86-emulation"/>
@@ -29,22 +25,21 @@
 		<ignore name="ibus-m17n"/>
 		<ignore name="xorg-x11-server-Xorg"/>
 	</packages>
-	<packages type="bootstrap" patternType="plusRecommended" profiles="GNOME-Desktop">
-		<package name="fedora-release-workstation"/>
-	</packages>
-	<packages type="image" patternType="plusRecommended" profiles="GNOME-Desktop">
-		<namedCollection name="workstation-product-environment"/>
-	</packages>
 	<packages type="bootstrap" patternType="plusRecommended" profiles="KDE-Desktop">
 		<package name="fedora-release-kde"/>
 	</packages>
 	<packages type="image" patternType="plusRecommended" profiles="KDE-Desktop">
 		<namedCollection name="kde-desktop-environment"/>
-		<namedCollection name="kde-apps"/>
 		<namedCollection name="kde-media"/>
-		<namedCollection name="kde-pim"/>
 		<package name="fuse"/>
 		<package name="kde-l10n"/>
+		<!-- Quill: kde-apps and kde-pim collections are dropped; keep these core apps -->
+		<package name="kcalc"/>
+		<package name="okular"/>
+		<package name="skanpage"/>
+		<!-- Quill: trimmed from the default image -->
+		<ignore name="elisa-player"/>
+		<ignore name="kde-connect"/>
 		<ignore name="@admin-tools"/>
 		<ignore name="initial-setup"/> <!-- redundant with plasma-setup -->
 		<ignore name="gnome-disk-utility"/>

@@ -22,7 +22,6 @@
 	<include from="this://./components/desktop-environments.xml"/>
 	<include from="this://./components/users.xml"/>
 	<include from="this://./platforms/minimal.xml"/>
-	<include from="this://./platforms/server.xml"/>
 	<include from="this://./platforms/workstation.xml"/>
 	<packages type="bootstrap">
 		<package name="basesystem"/>
