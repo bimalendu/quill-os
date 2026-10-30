@@ -10,7 +10,7 @@ for d in build kiwi packages installer policy ci tests docs; do
     [ -d "$d" ] && ok "dir $d/" || bad "missing dir $d/"
 done
 
-for f in README.md LICENSE Makefile build/Containerfile build/build-rpms.sh tests/doctor.sh tests/check-packages.sh .gitignore; do
+for f in README.md LICENSE Makefile build/Containerfile build/build-rpms.sh tests/doctor.sh tests/check-packages.sh tests/check-branding.sh .gitignore; do
     [ -f "$f" ] && ok "file $f" || bad "missing file $f"
 done
 

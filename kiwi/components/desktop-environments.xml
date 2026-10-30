@@ -26,7 +26,7 @@
 		<ignore name="xorg-x11-server-Xorg"/>
 	</packages>
 	<packages type="bootstrap" patternType="plusRecommended" profiles="KDE-Desktop">
-		<package name="fedora-release-kde"/>
+		<package name="quill-release-kde-desktop"/>
 	</packages>
 	<packages type="image" patternType="plusRecommended" profiles="KDE-Desktop">
 		<namedCollection name="kde-desktop-environment"/>
@@ -34,6 +34,10 @@
 		<package name="fuse"/>
 		<package name="kde-l10n"/>
 		<!-- Quill: kde-apps and kde-pim collections are dropped; keep these core apps -->
+		<package name="quill-release-identity-kde-desktop"/>
+		<package name="quill-logos"/>
+		<package name="quill-backgrounds-kde"/>
+		<package name="quill-plasma-theme"/>
 		<package name="kcalc"/>
 		<package name="okular"/>
 		<package name="skanpage"/>
@@ -42,6 +46,12 @@
 		     default, and kiwi's <ignore> becomes dnf exclude=NAME, which
 		     matches package names, not @groups. So list the packages. Nothing
 		     outside the PIM stack depends on it (checked with repoquery). -->
+		<ignore name="f44-backgrounds*"/>
+		<ignore name="desktop-backgrounds*"/>
+		<ignore name="breeze-icon-theme-fedora"/>
+		<ignore name="fedora-bookmarks"/>
+		<ignore name="plasma-welcome-fedora"/>
+		<ignore name="kde-settings-plasmalogin"/>
 		<ignore name="elisa-player"/>
 		<ignore name="kde-connect"/>
 		<ignore name="libreoffice*"/>

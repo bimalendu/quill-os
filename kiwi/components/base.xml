@@ -12,6 +12,11 @@
 		<ignore name="dracut-config-rescue"/>
 		<ignore name="generic-release*"/>
 		<ignore name="generic-logos*"/>
+		<!-- Quill: replaced by quill-release, quill-logos and quill-backgrounds-kde,
+		     which provide the same capabilities. ignore matches package names only. -->
+		<ignore name="fedora-asahi-remix-release*"/>
+		<ignore name="fedora-release*"/>
+		<ignore name="fedora-logos*"/>
 		<!-- pulled in as Recommends: via toolbox -> podman -> containers-common-extra -->
 		<ignore name="qemu-user-static"/>
 		<!-- ignore *-firmware packages which are unlikely to be used -->

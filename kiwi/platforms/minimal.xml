@@ -18,7 +18,8 @@
 		</type>
 	</preferences>
 	<packages type="image" patternType="plusRecommended" profiles="Minimal">
-		<package name="fedora-release"/>
+		<package name="quill-release"/>
+		<package name="quill-release-identity-basic"/>
 		<package name="initial-setup"/>
 	</packages>
 </image>

@@ -16,6 +16,12 @@ for p in kernel-16k-core asahi-platform-metapackage asahi-audio speakersafetyd \
          tiny-dfr m1n1 update-m1n1 mesa-dri-drivers mesa-vulkan-drivers \
          alsa-ucm-asahi dracut-asahi; do must "$p"; done
 
+# Quill's own branding packages, and none of the Fedora or Asahi ones they replace.
+for p in quill-release-common quill-logos; do must "$p"; done
+for p in fedora-logos fedora-release-common fedora-release-kde fedora-release-identity-kde \
+         fedora-asahi-remix-release-common fedora-asahi-remix-release-kde-desktop \
+         fedora-bookmarks; do must_not "$p"; done
+
 # Packages removed on purpose.
 for p in akonadi-server kdepim-runtime kmail kontact korganizer kaddressbook \
          akregator kleopatra libreoffice-core libreoffice-writer elisa-player \
@@ -25,7 +31,11 @@ for p in akonadi-server kdepim-runtime kmail kontact korganizer kaddressbook \
 case "$profile" in
     *KDE*)
         for p in plasma-desktop plasma-setup plasma-login-manager dolphin konsole kwrite okular \
-                 kcalc gwenview firefox; do must "$p"; done ;;
+                 kcalc gwenview firefox quill-release-kde-desktop quill-release-identity-kde-desktop \
+                 quill-backgrounds-kde quill-plasma-theme; do must "$p"; done
+        for p in f44-backgrounds-kde f44-backgrounds-base desktop-backgrounds-kde \
+                 breeze-icon-theme-fedora plasma-welcome-fedora kde-settings-plasmalogin; do
+            must_not "$p"; done ;;
 esac
 
 n=$(wc -l < "$pk" | tr -d ' ')

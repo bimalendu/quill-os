@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<image schemaversion="7.4" name="Fedora-Asahi-Remix" displayname="Fedora Linux Asahi Remix">
+<image schemaversion="7.4" name="Quill-OS" displayname="Quill OS">
 	<description type="system">
-		<author>Neal Gompa</author>
-		<contact>ngompa@fedoraproject.org</contact>
-		<specification>Fedora Asahi Remix</specification>
+		<author>Quill OS Maintainers</author>
+		<contact>maintainers@quill-os.example</contact>
+		<specification>Quill OS, based on Fedora Asahi Remix (kiwi descriptions by Neal Gompa and contributors)</specification>
 	</description>
 	<preferences>
 		<version>0.0.0</version>
@@ -17,6 +17,7 @@
 	</preferences>
 	<include from="this://./repositories/core.xml"/>
 	<include from="this://./repositories/asahi.xml"/>
+	<include from="this://./repositories/quill.xml"/>
 	<include from="this://./components/boot.xml"/>
 	<include from="this://./components/base.xml"/>
 	<include from="this://./components/desktop-environments.xml"/>

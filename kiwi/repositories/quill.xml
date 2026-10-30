@@ -1,0 +1,10 @@
+<image>
+	<!-- Quill's own packages. During development this is the local repo that
+	     `make rpms` publishes and `make image` mounts at /quill-repo. Replace
+	     with the published repository URL (and its signing key) for releases. -->
+	<repository type="rpm-md" alias="quill" sourcetype="baseurl" priority="1" imageinclude="false">
+		<source path="dir:///quill-repo">
+			<signing key="file:///quill-repo/RPM-GPG-KEY-quill-dev"/>
+		</source>
+	</repository>
+</image>

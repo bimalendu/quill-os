@@ -20,7 +20,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -33,6 +33,7 @@ help:
 	@echo "  make profiles       list kiwi profiles in kiwi/"
 	@echo "  make image          build the kiwi image for PROFILE=$(PROFILE)"
 	@echo "  make check-image    assert package expectations on the built image"
+	@echo "  make check-branding assert the built image's on-disk branding"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
@@ -69,7 +70,7 @@ kiwi-version:
 
 # The VM's real /dev is mounted because a container's static /dev never gets
 # the partition nodes (/dev/loop0p1 ...) kiwi needs after attaching the disk.
-KIWI_RUN = $(PODMAN) run --rm --privileged -v /dev:/dev -v $(SRCVOL):/code:ro -v $(OUTVOL):/out $(BUILDER_IMAGE)
+KIWI_RUN = $(PODMAN) run --rm --privileged -v /dev:/dev -v $(SRCVOL):/code:ro -v $(RPMVOL):/quill-repo:ro -v $(OUTVOL):/out $(BUILDER_IMAGE)
 
 # kiwi cannot list profiles without a type, so read the XML directly.
 profiles:
@@ -89,6 +90,13 @@ image: sync-src
 check-image:
 	$(PODMAN) run --rm -i -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
 		sh -c 'cat > /tmp/c.sh; sh /tmp/c.sh /out/$(PROFILE)/*.packages $(PROFILE)' < tests/check-packages.sh
+
+# Mount the built image read-only and assert its on-disk branding.
+check-branding:
+	$(PODMAN) run --rm -i --privileged -v /dev:/dev -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'cat > /tmp/c.sh; d=$$(losetup -P --sector-size 4096 -f --show /out/$(PROFILE)/*.raw); \
+		sleep 1; mkdir -p /m; mount -o ro,subvol=root $${d}p3 /m; \
+		sh /tmp/c.sh /m $(PROFILE); rc=$$?; umount /m; losetup -d $$d; exit $$rc' < tests/check-branding.sh
 
 fetch-image:
 	mkdir -p out
