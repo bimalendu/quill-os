@@ -18,6 +18,10 @@ for s in tests/*.sh; do
     sh -n "$s" && ok "syntax $s" || bad "syntax $s"
 done
 
+for x in $(find kiwi -name '*.xml'); do
+    xmllint --noout "$x" 2>/dev/null && ok "xml $x" || bad "xml $x is not well-formed"
+done
+
 make -n help >/dev/null 2>&1 && ok "Makefile parses" || bad "Makefile does not parse"
 
 exit "$fail"
