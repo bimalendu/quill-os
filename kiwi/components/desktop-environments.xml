@@ -25,6 +25,8 @@
 		<package name="plymouth-system-theme"/>
 		<ignore name="@dial-up"/>
 		<ignore name="@guest-desktop-agents"/>
+		<!-- Quill: ibus-m17n-1.4.39-1.fc44 is in updates metadata but missing from every mirror (2026-10-30). Remove once Fedora fixes the repo. -->
+		<ignore name="ibus-m17n"/>
 		<ignore name="xorg-x11-server-Xorg"/>
 	</packages>
 	<packages type="bootstrap" patternType="plusRecommended" profiles="GNOME-Desktop">

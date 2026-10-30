@@ -3,13 +3,16 @@
 FEDORA_RELEASE ?= 44
 MACHINE        ?= quill-build
 BUILDER_IMAGE  ?= quill-os-builder:f$(FEDORA_RELEASE)
-PROFILE        ?= Quill-KDE
+PROFILE        ?= Workstation-KDE
+# Images are built on a named volume inside the podman machine: kiwi needs
+# loop devices and a real filesystem, which a macOS bind mount cannot give.
+OUTVOL         ?= quill-out
 
 # The rootful connection of the dedicated machine, so the user's default
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version rpms image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -19,8 +22,10 @@ help:
 	@echo "  make builder        build the Fedora $(FEDORA_RELEASE) builder container"
 	@echo "  make shell          open a shell in the builder container"
 	@echo "  make kiwi-version   run kiwi-ng --version in the builder (toolchain check)"
+	@echo "  make profiles       list kiwi profiles in kiwi/"
+	@echo "  make image          build the kiwi image for PROFILE=$(PROFILE)"
+	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build Quill RPMs                  (Phase 3)"
-	@echo "  make image          build a kiwi image, PROFILE=$(PROFILE)  (Phase 2)"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
 	@echo "  make test           run repository checks"
 	@echo "  make clean          remove build output"
@@ -53,11 +58,23 @@ kiwi-version:
 	$(PODMAN) run --rm --privileged $(BUILDER_IMAGE) \
 		sh -c 'out=$$(kiwi-ng --version 2>&1); echo "$$out"; echo "$$out" | grep -q "^KIWI"'
 
-rpms:
-	@echo "make rpms is implemented in Phase 3 (branding RPMs)"; exit 1
+KIWI_RUN = $(PODMAN) run --rm --privileged -v "$(CURDIR)/kiwi":/code:ro,z -v $(OUTVOL):/out $(BUILDER_IMAGE)
+
+# kiwi cannot list profiles without a type, so read the XML directly.
+profiles:
+	@grep -rhoE '<profile name="[^"]+" description="[^"]*"' kiwi --include='*.xml' \
+		| sed -E 's/<profile name="([^"]+)" description="([^"]*)"/\1\t\2/' | sort
 
 image:
-	@echo "make image is implemented in Phase 2 (kiwi descriptions fork)"; exit 1
+	$(KIWI_RUN) kiwi-ng --debug --type=oem --profile=$(PROFILE) --color-output \
+		system build --description /code --target-dir /out/$(PROFILE)
+
+fetch-image:
+	mkdir -p out
+	$(PODMAN) run --rm -v $(OUTVOL):/out $(BUILDER_IMAGE) tar -C /out -cf - $(PROFILE) | tar -C out -xf -
+
+rpms:
+	@echo "make rpms is implemented in Phase 3 (branding RPMs)"; exit 1
 
 installer-pkg:
 	@echo "make installer-pkg is implemented in Phase 7 (installer)"; exit 1
