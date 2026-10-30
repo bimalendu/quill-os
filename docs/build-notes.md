@@ -49,3 +49,68 @@ a real build.
   rebases small.
 - `kiwi-ng image info --resolve-package-list` cannot validate the package
   set offline, so validation is a real build (about 18 minutes).
+
+## Branding (Phase 3)
+
+Quill's packages live in `packages/` and are built by `make rpms` into the
+`quill-rpms` podman volume (an rpm-md repo, signed with a throwaway dev key held
+in the `quill-keys` volume, never in git). `make image` mounts it at
+`/quill-repo`; `kiwi/repositories/quill.xml` points at it. For releases, replace
+that repository with the published one and its real signing key.
+
+| Package | Replaces | How |
+|---|---|---|
+| `quill-release` (+ `-common`, `-kde-desktop`, `-identity-*`) | `fedora-asahi-remix-release*`, `fedora-release*` | Provides `fedora-release`, `fedora-release-common`, `fedora-release-kde`, `system-release`, keeps the `%fedora` / `.fc44` macros. `ID=quill`, `ID_LIKE=fedora`. |
+| `quill-logos` | `fedora-logos` | Provides `system-logos`, the capability the Fedora KDE and Plymouth packages require. Ships `start-here` (launcher icon) and `system-logo-white.png` (Plymouth watermark, About this system). |
+| `quill-backgrounds-kde` | `f44-backgrounds-*`, `desktop-backgrounds-*` | Provides `system-backgrounds-kde`. Wallpapers are generated at build time by `gen-wallpaper.sh`. |
+| `quill-plasma-theme` | the Fedora look and feel *as default* | Colour schemes, two look-and-feel packages, `/etc/xdg/kdeglobals`, `/etc/xdg/kscreenlockerrc`, and `/usr/lib/plasmalogin/defaults.conf` (replaces `kde-settings-plasmalogin`). |
+
+### How the theme overrides Fedora without forking kde-settings
+
+Fedora's Plasma session sets
+`XDG_CONFIG_DIRS=/etc/xdg:/usr/share/kde-settings/kde-profile/default/xdg`
+(`/etc/xdg/plasma-workspace/env/env.sh`). `/etc/xdg` comes first, so Quill's
+`/etc/xdg/kdeglobals` wins over kde-settings' `LookAndFeelPackage` and
+`ColorScheme`.
+
+### Fedora packages excluded, and why
+
+`ignore` is `dnf --exclude=NAME` (package names and globs only):
+
+- `fedora-logos`, `fedora-release*`, `fedora-asahi-remix-release*`,
+  `f44-backgrounds*`, `desktop-backgrounds*`, `breeze-icon-theme-fedora`,
+  `fedora-bookmarks`, `plasma-welcome-fedora`: Fedora branding.
+- `abrt*`, `gnome-abrt`, `libreport-fedora`: ABRT's workflows file crash
+  reports on Fedora's Bugzilla. `libreport-filesystem` stays (mdadm requires it).
+- `NetworkManager-config-connectivity-fedora`: requested
+  `fedoraproject.org` on every connection. Side effect: no automatic
+  captive-portal sign-in pages.
+- `mediawriter`: carries the Fedora logo.
+
+### Fedora identity that remains, on purpose
+
+- `plasma-lookandfeel-fedora`: `plasma-workspace` requires it at an exact
+  version. It only adds "Fedora" entries to Settings > Appearance.
+- `fedora-repos`, `fedora-gpg-keys`, `fedora-workstation-repositories`,
+  `fedora-third-party`, `fedora-flathub-remote`: functional.
+- `fedora-asahi-remix-scripts`, `fedora-asahi-remix-appstream-metadata`:
+  functional Asahi tooling that carries the old name.
+- The m1n1 boot logo is Asahi's, inside `boot.bin`.
+- `/usr/share/wallpapers/Fedora`: a dangling symlink from `kde-settings-plasma`.
+
+### Placeholders to replace before publishing
+
+- All URLs are `https://quill-os.example/...`.
+- The logo (`packages/quill-logos/quill-mark.svg`) is a drawn placeholder.
+- Licenses: artwork CC-BY-SA-4.0, release package MIT, theme GPL-2.0-or-later.
+  `Quill-Legal-README.txt` is a draft that needs legal review.
+- Not verified without booting: the login screen wallpaper, Plymouth, and the
+  look of the Plasma session.
+
+### Image checks
+
+- `make check-image PROFILE=...` asserts the package list.
+- `make check-branding PROFILE=...` mounts the built image and asserts
+  `os-release`, leftover `fedora-logo*` files, the default look and feel, the
+  login wallpaper and that nothing contacts Fedora by default.
+- Branded `Workstation-KDE`: 1995 packages (trimmed, pre-branding: 2049).
