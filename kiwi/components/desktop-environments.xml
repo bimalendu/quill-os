@@ -37,9 +37,33 @@
 		<package name="kcalc"/>
 		<package name="okular"/>
 		<package name="skanpage"/>
-		<!-- Quill: trimmed from the default image -->
+		<!-- Quill: trimmed from the default image. The kde-desktop-environment
+		     environment installs the kde-pim, kde-apps and libreoffice groups by
+		     default, and kiwi's <ignore> becomes dnf exclude=NAME, which
+		     matches package names, not @groups. So list the packages. Nothing
+		     outside the PIM stack depends on it (checked with repoquery). -->
 		<ignore name="elisa-player"/>
 		<ignore name="kde-connect"/>
+		<ignore name="libreoffice*"/>
+		<ignore name="akonadi*"/>
+		<ignore name="kdepim*"/>
+		<ignore name="pim-*"/>
+		<ignore name="kmail*"/>
+		<ignore name="kontact*"/>
+		<ignore name="korganizer"/>
+		<ignore name="kaddressbook"/>
+		<ignore name="akregator"/>
+		<ignore name="kleopatra"/>
+		<ignore name="keditbookmarks"/>
+		<ignore name="kmahjongg"/>
+		<ignore name="kmines"/>
+		<ignore name="kmouth"/>
+		<ignore name="kpat"/>
+		<ignore name="krdc"/>
+		<ignore name="krusader"/>
+		<ignore name="ktorrent"/>
+		<ignore name="neochat"/>
+		<ignore name="qrca"/>
 		<ignore name="@admin-tools"/>
 		<ignore name="initial-setup"/> <!-- redundant with plasma-setup -->
 		<ignore name="gnome-disk-utility"/>

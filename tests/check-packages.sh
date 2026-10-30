@@ -17,8 +17,9 @@ for p in kernel-16k-core asahi-platform-metapackage asahi-audio speakersafetyd \
          alsa-ucm-asahi dracut-asahi; do must "$p"; done
 
 # Packages removed on purpose.
-for p in akonadi-server kmail kontact korganizer kaddressbook akregator \
-         libreoffice-core elisa-player kde-connect \
+for p in akonadi-server kdepim-runtime kmail kontact korganizer kaddressbook \
+         akregator kleopatra libreoffice-core libreoffice-writer elisa-player \
+         kde-connect kmahjongg kmines kpat krusader ktorrent neochat krdc \
          gnome-shell gnome-session; do must_not "$p"; done
 
 case "$profile" in
