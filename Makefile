@@ -23,13 +23,14 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
 	@echo "  make doctor         check host tools and the build machine"
 	@echo "  make machine        create and start the rootful '$(MACHINE)' podman machine"
 	@echo "  make machine-stop   stop the build machine"
+	@echo "  make reclaim-space  give freed build space back to macOS (run after builds)"
 	@echo "  make builder        build the Fedora $(FEDORA_RELEASE) builder container"
 	@echo "  make shell          open a shell in the builder container"
 	@echo "  make kiwi-version   run kiwi-ng --version in the builder (toolchain check)"
@@ -63,6 +64,11 @@ machine:
 
 machine-stop:
 	podman machine stop $(MACHINE)
+
+# The build machine's disk file on the Mac grows with every build and never shrinks by
+# itself: deleted images stay allocated on the Mac. fstrim hands them back.
+reclaim-space:
+	podman machine ssh $(MACHINE) 'sudo fstrim -av'
 
 builder:
 	$(PODMAN) build --build-arg FEDORA_RELEASE=$(FEDORA_RELEASE) \
@@ -152,9 +158,14 @@ check-vm:
 	$(PODMAN) run --rm -i --privileged -v /dev:/dev -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
 		sh -c 'cat > /tmp/c.sh; sh /tmp/c.sh /out/VM-KDE' < tests/check-vm.sh
 
+# Copy the finished image out of the podman volume to ./out/<PROFILE>/. A VM profile
+# gives just the .qcow2 (the 32 GB raw disk is not needed); Apple Silicon profiles
+# give the .raw. A SHA-256 file is written next to it.
 fetch-image:
-	mkdir -p out
-	$(PODMAN) run --rm -v $(OUTVOL):/out $(BUILDER_IMAGE) tar -C /out -cf - $(PROFILE) | tar -C out -xf -
+	mkdir -p out/$(PROFILE)
+	$(PODMAN) run --rm -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) sh -c \
+		'cd /out/$(PROFILE) && f=$$(ls *.qcow2 2>/dev/null || ls *.raw) && tar -cf - $$f *.packages' | tar -C out/$(PROFILE) -xf -
+	cd out/$(PROFILE) && for f in *.qcow2 *.raw; do [ -f "$$f" ] && shasum -a 256 "$$f" > "$$f.sha256"; done; ls -lh
 
 # Build, sign and publish packages/ as an rpm-md repo in the $(RPMVOL) volume.
 # The dev signing key lives in $(KEYVOL), never in the working tree.

@@ -33,4 +33,12 @@ else
     fail=1
 fi
 
+# Builds write tens of GB to the build machine's disk file on this Mac.
+free_gb=$(df -k "$HOME" | awk 'NR==2 {printf "%d", $4/1024/1024}')
+if [ "$free_gb" -lt 25 ]; then
+    echo "WARN  only ${free_gb} GB free on this Mac: builds may fail. Try: make reclaim-space"
+else
+    echo "ok    ${free_gb} GB free on this Mac"
+fi
+
 exit "$fail"

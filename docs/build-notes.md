@@ -135,3 +135,13 @@ See `docs/quill-setup.md`. `Workstation-KDE`: 2006 packages. `make rpms` now
 builds `quill-setup` from a source tarball it creates from
 `packages/quill-setup/src/`. The builder image gained Qt 6, Kirigami, flatpak,
 polkit and desktop-file-utils.
+
+## Disk space on the Mac
+
+The build machine's disk file (`~/.local/share/containers/podman/machine/applehv/quill-build-arm64.raw`)
+only grows: blocks freed inside the VM stay allocated on macOS. On 2026-10-30 it
+reached 78 GB while the VM used 33 GB, and the Mac fell to 17 GB free (97% full).
+`make reclaim-space` runs `fstrim` in the VM and returned 46 GB. Run it after a
+batch of builds, and `make doctor` warns when the Mac has under 25 GB free.
+The VM disk is capped at 80 GB, and the Apple Silicon and VM images are each
+15 to 32 GB while building.
