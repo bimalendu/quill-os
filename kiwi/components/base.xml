@@ -22,7 +22,8 @@
 		     connectivity check requests fedoraproject.org on every connection. -->
 		<ignore name="abrt*"/>
 		<ignore name="gnome-abrt"/>
-		<ignore name="libreport*"/>
+		<!-- libreport-filesystem stays: mdadm requires it. It only owns directories. -->
+		<ignore name="libreport-fedora"/>
 		<ignore name="satyr"/>
 		<ignore name="python3-satyr"/>
 		<ignore name="NetworkManager-config-connectivity-fedora"/>
