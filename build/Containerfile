@@ -15,4 +15,6 @@ RUN dnf -y install \
         curl \
     && dnf clean all
 
+COPY kiwi-wrapper.sh /usr/local/bin/kiwi-wrapper
+
 WORKDIR /work
