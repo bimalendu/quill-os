@@ -17,6 +17,15 @@
 		<ignore name="fedora-asahi-remix-release*"/>
 		<ignore name="fedora-release*"/>
 		<ignore name="fedora-logos*"/>
+		<!-- Quill: no phone-home or misrouted reports. ABRT's libreport-fedora files
+		     crash reports on Fedora's Bugzilla, and NetworkManager's Fedora
+		     connectivity check requests fedoraproject.org on every connection. -->
+		<ignore name="abrt*"/>
+		<ignore name="gnome-abrt"/>
+		<ignore name="libreport*"/>
+		<ignore name="satyr"/>
+		<ignore name="python3-satyr"/>
+		<ignore name="NetworkManager-config-connectivity-fedora"/>
 		<!-- pulled in as Recommends: via toolbox -> podman -> containers-common-extra -->
 		<ignore name="qemu-user-static"/>
 		<!-- ignore *-firmware packages which are unlikely to be used -->

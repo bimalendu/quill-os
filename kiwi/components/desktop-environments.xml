@@ -15,7 +15,6 @@
 		<namedCollection name="printing"/>
 		<namedCollection name="x86-emulation"/>
 		<package name="aajohan-comfortaa-fonts"/>
-		<package name="mediawriter"/>
 		<package name="mesa-dri-drivers"/>
 		<package name="mesa-vulkan-drivers"/>
 		<package name="plymouth-system-theme"/>
@@ -52,6 +51,7 @@
 		<ignore name="fedora-bookmarks"/>
 		<ignore name="plasma-welcome-fedora"/>
 		<ignore name="kde-settings-plasmalogin"/>
+		<ignore name="mediawriter"/>
 		<ignore name="elisa-player"/>
 		<ignore name="kde-connect"/>
 		<ignore name="libreoffice*"/>

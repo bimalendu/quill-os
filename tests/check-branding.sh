@@ -23,6 +23,15 @@ grep -qi "fedora asahi remix\|fedora linux" "$osr" && bad "os-release still ment
 [ -f "$root/usr/share/icons/hicolor/48x48/places/start-here.png" ] && ok "start-here icon present" || bad "start-here icon missing"
 [ -f "$root/usr/share/pixmaps/system-logo-white.png" ] && ok "system-logo-white.png present" || bad "system-logo-white.png missing"
 
+# Nothing may phone home to Fedora by default.
+if grep -rIl "fedoraproject.org" "$root/etc/NetworkManager" "$root/usr/lib/NetworkManager" 2>/dev/null | grep -q .; then
+    bad "NetworkManager config still contacts fedoraproject.org"
+else
+    ok "NetworkManager config does not contact fedoraproject.org"
+fi
+[ -e "$root/etc/libreport/workflows.d/report_fedora.conf" ] \
+    && bad "Fedora crash-report workflow still installed" || ok "no Fedora crash-report workflow"
+
 # No Fedora logo files may remain.
 n=$(find "$root/usr/share" \( -iname 'fedora-logo*' -o -iname 'fedora_logo*' -o -iname 'fedora-gdm-logo*' \) 2>/dev/null | wc -l | tr -d ' ')
 [ "$n" = 0 ] && ok "no fedora-logo* files" || { bad "$n fedora-logo* files remain:"; find "$root/usr/share" \( -iname 'fedora-logo*' -o -iname 'fedora_logo*' \) | head -5; }

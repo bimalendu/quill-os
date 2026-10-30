@@ -20,7 +20,8 @@ for p in kernel-16k-core asahi-platform-metapackage asahi-audio speakersafetyd \
 for p in quill-release-common quill-logos; do must "$p"; done
 for p in fedora-logos fedora-release-common fedora-release-kde fedora-release-identity-kde \
          fedora-asahi-remix-release-common fedora-asahi-remix-release-kde-desktop \
-         fedora-bookmarks; do must_not "$p"; done
+         fedora-bookmarks abrt abrt-desktop libreport-fedora mediawriter \
+         NetworkManager-config-connectivity-fedora; do must_not "$p"; done
 
 # Packages removed on purpose.
 for p in akonadi-server kdepim-runtime kmail kontact korganizer kaddressbook \
