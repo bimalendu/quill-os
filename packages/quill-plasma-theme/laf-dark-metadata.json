@@ -1,0 +1,11 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [{"Name": "Quill OS"}],
+        "Description": "Quill OS dark theme",
+        "Id": "org.quill.dark.desktop",
+        "License": "GPL-2.0-or-later",
+        "Name": "Quill Dark",
+        "Website": "https://quill-os.example/"
+    }
+}

@@ -1,0 +1,11 @@
+# Quill OS system defaults. /etc/xdg comes before Fedora's kde-settings profile
+# in XDG_CONFIG_DIRS, so these override kde-settings' Fedora look and feel.
+[KDE]
+LookAndFeelPackage=org.quill.desktop
+
+[General]
+ColorScheme=QuillLight
+AccentColor=75,74,207
+
+[Icons]
+Theme=breeze
