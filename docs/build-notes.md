@@ -21,3 +21,31 @@ a real build.
 - 2251 packages, 9.4 GB root subvolume, 15 GB sparse raw disk.
 - Partitions: 500 MB EFI (with `m1n1/boot.bin`), 1 GB ext4 `/boot`, btrfs root with `root` and `home` subvolumes.
 - Kernel `7.2.12-402.asahi.fc44.aarch64+16k`.
+
+## Trimmed image (Workstation-KDE after Phase 2 trimming)
+
+- 2049 packages (baseline 2251), 8.1 GB root (baseline 9.4 GB). Same kernel,
+  same `m1n1/boot.bin`. `make check-image` passes.
+- Removed: KDE PIM stack, LibreOffice, Elisa, KDE Connect, the extra
+  kde-apps (games, Krusader, KTorrent, NeoChat, KRDC, ...), GNOME and Server
+  profiles.
+- Still large and untouched: the rest of `kde-media` (digiKam, K3b, Kamoso,
+  Dragon, KolourPaint), Firefox, fonts, input methods, firmware.
+- `keditbookmarks` stays because `konsole` requires it.
+- kiwi's `<ignore>` is `dnf --exclude=NAME`: it matches package names and
+  globs, not `@groups`. Upstream's `@dial-up`-style ignores are therefore
+  probably no-ops. The `kde-desktop-environment` environment installs the
+  kde-pim, kde-apps and libreoffice groups by default, so each must be
+  excluded by package name.
+
+## Differences from the original plan
+
+- Fedora 44 KDE uses `plasma-setup` for first boot, not Calamares. Phase 5
+  needs a different mechanism for the package picker.
+- The login manager is Plasma Login Manager, not SDDM. Phase 3 themes that.
+- The default editor is KWrite; Kate is not installed. Add it to the
+  Developer group.
+- Profile names stay as upstream's (`Workstation-KDE`, `Minimal`) to keep
+  rebases small.
+- `kiwi-ng image info --resolve-package-list` cannot validate the package
+  set offline, so validation is a real build (about 18 minutes).
