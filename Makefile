@@ -63,7 +63,9 @@ kiwi-version:
 	$(PODMAN) run --rm --privileged $(BUILDER_IMAGE) \
 		sh -c 'out=$$(kiwi-ng --version 2>&1); echo "$$out"; echo "$$out" | grep -q "^KIWI"'
 
-KIWI_RUN = $(PODMAN) run --rm --privileged -v $(SRCVOL):/code:ro -v $(OUTVOL):/out $(BUILDER_IMAGE)
+# The VM's real /dev is mounted because a container's static /dev never gets
+# the partition nodes (/dev/loop0p1 ...) kiwi needs after attaching the disk.
+KIWI_RUN = $(PODMAN) run --rm --privileged -v /dev:/dev -v $(SRCVOL):/code:ro -v $(OUTVOL):/out $(BUILDER_IMAGE)
 
 # kiwi cannot list profiles without a type, so read the XML directly.
 profiles:
@@ -76,7 +78,7 @@ sync-src:
 	COPYFILE_DISABLE=1 tar -C kiwi -cf - . | $(PODMAN) run --rm -i -v $(SRCVOL):/code $(BUILDER_IMAGE) tar -C /code -xf -
 
 image: sync-src
-	$(KIWI_RUN) kiwi-wrapper kiwi-ng --debug --type=oem --profile=$(PROFILE) --color-output \
+	$(KIWI_RUN) kiwi-ng --debug --type=oem --profile=$(PROFILE) --color-output \
 		system build --description /code --target-dir /out/$(PROFILE)
 
 fetch-image:
