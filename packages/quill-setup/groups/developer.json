@@ -1,0 +1,12 @@
+{
+  "id": "developer",
+  "name": "Developer tools",
+  "description": "Compilers and build tools (GCC, Clang, CMake, Ninja, GDB), Python, Node.js, Rust, Go, containers (Podman, Toolbx, Distrobox), Neovim, Kate and VSCodium. No AI assistants or AI editor extensions are included.",
+  "order": 10,
+  "rpm": [
+    "git", "git-lfs", "gcc", "gcc-c++", "clang", "cmake", "make", "ninja-build", "gdb",
+    "python3-pip", "python3-virtualenv", "nodejs24", "rust", "cargo", "golang",
+    "podman", "toolbox", "distrobox", "neovim", "kate", "ripgrep", "fd-find", "jq", "htop", "tmux"
+  ],
+  "flatpak": ["com.vscodium.codium"]
+}

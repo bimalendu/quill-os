@@ -1,0 +1,8 @@
+{
+  "id": "gaming",
+  "name": "Gaming extras",
+  "description": "Lutris, MangoHud and GameMode. x86 compatibility (FEX and muvm) is already part of Quill OS. Steam is not offered here: it is not in Fedora's repositories, and Flathub's Steam is x86-only.",
+  "order": 50,
+  "rpm": ["lutris", "mangohud", "gamemode"],
+  "flatpak": []
+}

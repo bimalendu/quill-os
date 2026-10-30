@@ -20,7 +20,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -36,6 +36,7 @@ help:
 	@echo "  make check-branding assert the built image's on-disk branding"
 	@echo "  make check-no-ai    validate the no-AI Firefox policy against the image"
 	@echo "  make check-firefox  run the image's Firefox headless and assert the no-AI policy"
+	@echo "  make check-group-packages  check the setup groups name real aarch64 packages (network)"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
@@ -121,6 +122,13 @@ check-firefox:
 			timeout 90 /usr/bin/firefox --headless --no-remote --marionette --profile /tmp/prof about:blank >/tmp/ff.out 2>&1 & \
 		python3 /tmp/probe.py; rc=$$?; pkill -f bin/firefox; sleep 2; \
 		umount /m/dev /m/proc /m/tmp /m; losetup -d $$d; exit $$rc' < tests/probe-firefox.py
+
+# Check every package and Flatpak in the Quill Setup groups exists for aarch64 (needs network).
+check-group-packages:
+	rm -rf out/groups && python3 tests/check-groups.py --dump out/groups
+	COPYFILE_DISABLE=1 tar -cf - -C out groups -C .. tests/check-group-packages.sh | \
+		$(PODMAN) run --rm -i $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/tests/check-group-packages.sh /c/groups'
 
 fetch-image:
 	mkdir -p out

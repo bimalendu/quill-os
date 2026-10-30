@@ -22,6 +22,7 @@ RUN dnf -y install \
         librsvg2-tools \
         ImageMagick \
         gawk \
+        flatpak \
     && dnf clean all
 
 COPY build-rpms.sh /usr/local/bin/build-rpms

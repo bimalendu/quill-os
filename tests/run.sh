@@ -24,6 +24,9 @@ done
 
 sh tests/test-denylist.sh >/dev/null && ok "denylist self-test" || bad "denylist self-test"
 
+python3 tests/check-groups.py >/dev/null && ok "setup groups are well formed" || bad "setup groups are malformed"
+sh tests/test-groups.sh >/dev/null && ok "groups self-test" || bad "groups self-test"
+
 make -n help >/dev/null 2>&1 && ok "Makefile parses" || bad "Makefile does not parse"
 
 exit "$fail"

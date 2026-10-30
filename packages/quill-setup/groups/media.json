@@ -1,0 +1,8 @@
+{
+  "id": "media",
+  "name": "Audio and video",
+  "description": "mpv, Haruna and VLC players, the Elisa music player and the Kdenlive video editor.",
+  "order": 30,
+  "rpm": ["mpv", "haruna", "vlc", "elisa-player", "kdenlive"],
+  "flatpak": []
+}

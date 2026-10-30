@@ -1,0 +1,11 @@
+{
+  "id": "office",
+  "name": "Office",
+  "description": "LibreOffice Writer, Calc, Impress and Draw with KDE integration. Large download.",
+  "order": 20,
+  "rpm": [
+    "libreoffice-writer", "libreoffice-calc", "libreoffice-impress", "libreoffice-draw",
+    "libreoffice-kf6", "libreoffice-langpack-en"
+  ],
+  "flatpak": []
+}

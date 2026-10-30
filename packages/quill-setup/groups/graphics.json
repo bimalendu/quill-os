@@ -1,0 +1,8 @@
+{
+  "id": "graphics",
+  "name": "Graphics and photography",
+  "description": "GIMP, Inkscape, Krita and darktable.",
+  "order": 40,
+  "rpm": ["gimp", "inkscape", "krita", "darktable"],
+  "flatpak": []
+}
