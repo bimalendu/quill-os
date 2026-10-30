@@ -37,6 +37,7 @@
 		<package name="quill-logos"/>
 		<package name="quill-backgrounds-kde"/>
 		<package name="quill-plasma-theme"/>
+		<package name="quill-no-ai"/>
 		<package name="kcalc"/>
 		<package name="okular"/>
 		<package name="skanpage"/>

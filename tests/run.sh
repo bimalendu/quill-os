@@ -10,7 +10,7 @@ for d in build kiwi packages installer policy ci tests docs; do
     [ -d "$d" ] && ok "dir $d/" || bad "missing dir $d/"
 done
 
-for f in README.md LICENSE Makefile build/Containerfile build/build-rpms.sh tests/doctor.sh tests/check-packages.sh tests/check-branding.sh .gitignore; do
+for f in README.md LICENSE Makefile build/Containerfile build/build-rpms.sh tests/doctor.sh tests/check-packages.sh tests/check-branding.sh tests/check-denylist.sh tests/test-denylist.sh tests/check-no-ai.sh policy/ai-denylist.txt .gitignore; do
     [ -f "$f" ] && ok "file $f" || bad "missing file $f"
 done
 
@@ -21,6 +21,8 @@ done
 for x in $(find kiwi -name '*.xml'); do
     xmllint --noout "$x" 2>/dev/null && ok "xml $x" || bad "xml $x is not well-formed"
 done
+
+sh tests/test-denylist.sh >/dev/null && ok "denylist self-test" || bad "denylist self-test"
 
 make -n help >/dev/null 2>&1 && ok "Makefile parses" || bad "Makefile does not parse"
 

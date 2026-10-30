@@ -1,0 +1,10 @@
+{
+  "policies": {
+    "AIControls": {
+      "Default": {
+        "Value": "blocked",
+        "Locked": false
+      }
+    }
+  }
+}

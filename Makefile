@@ -20,7 +20,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -34,6 +34,7 @@ help:
 	@echo "  make image          build the kiwi image for PROFILE=$(PROFILE)"
 	@echo "  make check-image    assert package expectations on the built image"
 	@echo "  make check-branding assert the built image's on-disk branding"
+	@echo "  make check-no-ai    validate the no-AI Firefox policy against the image"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
@@ -86,10 +87,13 @@ image: sync-src
 	$(KIWI_RUN) kiwi-ng --debug --type=oem --profile=$(PROFILE) --color-output \
 		system build --description /code --target-dir /out/$(PROFILE)
 
-# Assert the built image's package list; PROFILE selects the expectations.
+# Assert the built image's package list and the AI denylist; PROFILE selects the expectations.
 check-image:
-	$(PODMAN) run --rm -i -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
-		sh -c 'cat > /tmp/c.sh; sh /tmp/c.sh /out/$(PROFILE)/*.packages $(PROFILE)' < tests/check-packages.sh
+	COPYFILE_DISABLE=1 tar -cf - tests/check-packages.sh tests/check-denylist.sh policy/ai-denylist.txt | \
+		$(PODMAN) run --rm -i -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && cd /c \
+		&& sh tests/check-packages.sh /out/$(PROFILE)/*.packages $(PROFILE) \
+		&& sh tests/check-denylist.sh policy/ai-denylist.txt --rpms /out/$(PROFILE)/*.packages'
 
 # Mount the built image read-only and assert its on-disk branding.
 check-branding:
@@ -97,6 +101,13 @@ check-branding:
 		sh -c 'cat > /tmp/c.sh; d=$$(losetup -P --sector-size 4096 -f --show /out/$(PROFILE)/*.raw); \
 		sleep 1; mkdir -p /m; mount -o ro,subvol=root $${d}p3 /m; \
 		sh /tmp/c.sh /m $(PROFILE); rc=$$?; umount /m; losetup -d $$d; exit $$rc' < tests/check-branding.sh
+
+# Validate the no-AI policy against the built image's own Firefox schema.
+check-no-ai:
+	$(PODMAN) run --rm -i --privileged -v /dev:/dev -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'cat > /tmp/c.sh; d=$$(losetup -P --sector-size 4096 -f --show /out/$(PROFILE)/*.raw); \
+		sleep 1; mkdir -p /m; mount -o ro,subvol=root $${d}p3 /m; \
+		sh /tmp/c.sh /m; rc=$$?; umount /m; losetup -d $$d; exit $$rc' < tests/check-no-ai.sh
 
 fetch-image:
 	mkdir -p out
@@ -107,7 +118,10 @@ fetch-image:
 rpms:
 	-$(PODMAN) volume create $(KEYVOL) >/dev/null
 	-$(PODMAN) volume create $(RPMVOL) >/dev/null
-	COPYFILE_DISABLE=1 tar -C packages -cf - . | $(PODMAN) run --rm -i \
+	rm -rf out/stage && mkdir -p out/stage
+	cp -R packages/. out/stage/
+	cp policy/ai-denylist.txt out/stage/quill-no-ai/ai-denylist.txt
+	COPYFILE_DISABLE=1 tar -C out/stage -cf - . | $(PODMAN) run --rm -i \
 		-v $(KEYVOL):/keys -v $(RPMVOL):/repo $(BUILDER_IMAGE) \
 		sh -c 'mkdir /src && tar -C /src -xf - && build-rpms'
 

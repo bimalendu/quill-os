@@ -33,7 +33,7 @@ case "$profile" in
     *KDE*)
         for p in plasma-desktop plasma-setup plasma-login-manager dolphin konsole kwrite okular \
                  kcalc gwenview firefox quill-release-kde-desktop quill-release-identity-kde-desktop \
-                 quill-backgrounds-kde quill-plasma-theme quill-logos \
+                 quill-backgrounds-kde quill-plasma-theme quill-logos quill-no-ai \
                  mesa-vulkan-drivers; do must "$p"; done
         for p in f44-backgrounds-kde f44-backgrounds-base desktop-backgrounds-kde \
                  breeze-icon-theme-fedora plasma-welcome-fedora kde-settings-plasmalogin; do

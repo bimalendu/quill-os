@@ -1,0 +1,46 @@
+# Quill OS AI denylist
+#
+# What Quill OS must not SHIP in its images. A build check (`make check-image`)
+# fails if a package or Flatpak matching an entry below ends up in an image or
+# in a package group of the first-boot package picker.
+#
+# Scope: generative and assistant AI, meaning chatbots, LLM assistants, local
+# LLM runtimes and servers, AI agents, and AI-generated-content tools. Classical
+# machine learning that does one fixed local job stays allowed: Tesseract OCR
+# (Okular, Skanpage), eSpeak text-to-speech, text prediction and input methods.
+# Decided 2026-10-30.
+#
+# Enforcement: images only. The installed system does NOT block these packages.
+# Users stay free to install anything, including AI tools, themselves.
+#
+# Format, one entry per line:
+#   rpm: <name or shell glob>        matched against RPM package names
+#   flatpak: <application id>        matched against Flatpak application IDs
+# Lines starting with # and blank lines are ignored. Keep the globs narrow:
+# "copilot*" would match Haskell's unrelated ghc-copilot-* packages.
+#
+# "verified" = the name exists in Fedora 44 or on Flathub as of 2026-10-30.
+# "prospective" = a known project that is not packaged yet.
+
+# --- RPM, verified in Fedora 44 ------------------------------------------------
+rpm: ollama                  # local LLM runtime and server
+rpm: llama-cpp               # LLM inference engine
+rpm: llama-cpp-*
+rpm: python3-llama-cpp-python
+rpm: kaichat                 # chat interface for AI models such as ollama
+rpm: goose                   # extensible AI agent client
+rpm: agr                     # package manager for AI agents
+rpm: openqa-llm-server       # local LLM server for openQA workers
+
+# --- RPM, prospective ----------------------------------------------------------
+rpm: gpt4all*
+rpm: alpaka                  # KDE client for Ollama
+rpm: open-webui
+rpm: claude-code
+rpm: gemini-cli
+rpm: aichat
+
+# --- Flatpak, verified on Flathub ----------------------------------------------
+flatpak: com.jeffser.Alpaca  # chat with AI models
+flatpak: io.gpt4all.gpt4all  # open-source assistant
+flatpak: ai.jan.Jan          # private offline AI assistant
