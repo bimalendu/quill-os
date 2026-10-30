@@ -54,7 +54,7 @@
 		<ignore name="kaddressbook"/>
 		<ignore name="akregator"/>
 		<ignore name="kleopatra"/>
-		<ignore name="keditbookmarks"/>
+		<!-- keditbookmarks stays: konsole requires it -->
 		<ignore name="kmahjongg"/>
 		<ignore name="kmines"/>
 		<ignore name="kmouth"/>
