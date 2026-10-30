@@ -23,7 +23,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -42,6 +42,7 @@ help:
 	@echo "  make check-group-packages  check the setup groups name real aarch64 packages (network)"
 	@echo "  make check-setup-helper  test the group installer as root with real dnf"
 	@echo "  make check-setup-app  install the quill-setup RPM and test it (autostart, files)"
+	@echo "  make check-vm       static boot-chain checks of the VM image (does not boot it)"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
@@ -145,6 +146,11 @@ check-setup-helper:
 check-setup-app:
 	$(PODMAN) run --rm -i -v $(RPMVOL):/repo:ro $(BUILDER_IMAGE) \
 		sh -c 'cat > /tmp/t.sh; sh /tmp/t.sh' < tests/test-setup-app.sh
+
+# Static boot-chain checks of the VM image (EFI loader, boot entry, UUIDs, drivers, services, qcow2).
+check-vm:
+	$(PODMAN) run --rm -i --privileged -v /dev:/dev -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'cat > /tmp/c.sh; sh /tmp/c.sh /out/VM-KDE' < tests/check-vm.sh
 
 fetch-image:
 	mkdir -p out

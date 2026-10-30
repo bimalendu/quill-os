@@ -34,6 +34,7 @@ RUN dnf -y install \
         dejavu-sans-fonts \
         dejavu-sans-mono-fonts \
         polkit \
+        dracut \
         desktop-file-utils \
     && dnf clean all
 
