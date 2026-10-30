@@ -1,6 +1,9 @@
 <image>
 	<profiles>
 		<profile name="Common" description="Common packages"/>
+		<!-- Quill: the Apple Silicon (Asahi) specific packages, split out of Common so
+		     that the generic aarch64 VM image does not get them. -->
+		<profile name="AsahiPlatform" description="Apple Silicon (Asahi) platform packages"/>
 	</profiles>
 	<packages type="image" patternType="plusRecommended" profiles="Common">
 		<namedCollection name="core"/>
@@ -37,7 +40,8 @@
 		<ignore name="iwlwifi-mvm-firmware"/>
 		<ignore name="nvidia-gpu-firmware"/>
 		<ignore name="qcom-firmware"/>
-		<!-- Asahi packages -->
+	</packages>
+	<packages type="image" patternType="plusRecommended" profiles="AsahiPlatform">
 		<package name="alsa-ucm-asahi"/>
 		<package name="asahi-platform-metapackage"/>
 		<package name="asahi-repos"/>

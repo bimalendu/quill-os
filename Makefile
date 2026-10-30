@@ -4,6 +4,9 @@ FEDORA_RELEASE ?= 44
 MACHINE        ?= quill-build
 BUILDER_IMAGE  ?= quill-os-builder:f$(FEDORA_RELEASE)
 PROFILE        ?= Workstation-KDE
+# Apple NVMe disks use 4096-byte sectors, so the Apple Silicon images are written that
+# way; a VM disk (a profile with VM in its name) uses 512.
+SECTOR         = $(if $(findstring VM,$(PROFILE)),512,4096)
 # Images are built on a named volume inside the podman machine: kiwi needs
 # loop devices and a real filesystem, which a macOS bind mount cannot give.
 OUTVOL         ?= quill-out
@@ -102,14 +105,14 @@ check-image:
 # Mount the built image read-only and assert its on-disk branding.
 check-branding:
 	$(PODMAN) run --rm -i --privileged -v /dev:/dev -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
-		sh -c 'cat > /tmp/c.sh; d=$$(losetup -P --sector-size 4096 -f --show /out/$(PROFILE)/*.raw); \
+		sh -c 'cat > /tmp/c.sh; d=$$(losetup -P --sector-size $(SECTOR) -f --show /out/$(PROFILE)/*.raw); \
 		sleep 1; mkdir -p /m; mount -o ro,subvol=root $${d}p3 /m; \
 		sh /tmp/c.sh /m $(PROFILE); rc=$$?; umount /m; losetup -d $$d; exit $$rc' < tests/check-branding.sh
 
 # Validate the no-AI policy against the built image's own Firefox schema.
 check-no-ai:
 	$(PODMAN) run --rm -i --privileged -v /dev:/dev -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
-		sh -c 'cat > /tmp/c.sh; d=$$(losetup -P --sector-size 4096 -f --show /out/$(PROFILE)/*.raw); \
+		sh -c 'cat > /tmp/c.sh; d=$$(losetup -P --sector-size $(SECTOR) -f --show /out/$(PROFILE)/*.raw); \
 		sleep 1; mkdir -p /m; mount -o ro,subvol=root $${d}p3 /m; \
 		sh /tmp/c.sh /m; rc=$$?; umount /m; losetup -d $$d; exit $$rc' < tests/check-no-ai.sh
 
@@ -117,7 +120,7 @@ check-no-ai:
 # policy is applied. Slow (about a minute) and needs the built image.
 check-firefox:
 	$(PODMAN) run --rm -i --privileged -v /dev:/dev -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
-		sh -c 'cat > /tmp/probe.py; d=$$(losetup -P --sector-size 4096 -f --show /out/$(PROFILE)/*.raw); sleep 1; \
+		sh -c 'cat > /tmp/probe.py; d=$$(losetup -P --sector-size $(SECTOR) -f --show /out/$(PROFILE)/*.raw); sleep 1; \
 		mkdir -p /m; mount -o ro,subvol=root $${d}p3 /m; rm -rf /ffhome; mkdir -p /ffhome/prof; \
 		mount --bind /ffhome /m/tmp; mount --bind /proc /m/proc; mount --bind /dev /m/dev; \
 		chroot /m /usr/bin/env HOME=/tmp MOZ_HEADLESS=1 MOZ_DISABLE_CONTENT_SANDBOX=1 MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1 \

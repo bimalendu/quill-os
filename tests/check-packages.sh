@@ -11,10 +11,19 @@ have() { cut -d'|' -f1 "$pk" | grep -qx "$1"; }
 must()     { have "$1" && printf 'ok    has  %s\n' "$1"   || { printf 'FAIL  missing %s\n' "$1"; fail=1; }; }
 must_not() { have "$1" && { printf 'FAIL  unexpected %s\n' "$1"; fail=1; } || printf 'ok    lacks %s\n' "$1"; }
 
-# Asahi hardware stack: Quill never drops these.
-for p in kernel-16k-core asahi-platform-metapackage asahi-audio speakersafetyd \
-         tiny-dfr m1n1 update-m1n1 mesa-dri-drivers \
-         alsa-ucm-asahi dracut-asahi; do must "$p"; done
+case "$profile" in
+    *VM*)
+        # A generic aarch64 UEFI VM: Fedora's own kernel and guest tools, nothing from Asahi.
+        for p in kernel-core grub2-efi-aa64 qemu-guest-agent spice-vdagent mesa-dri-drivers; do must "$p"; done
+        for p in kernel-16k-core asahi-platform-metapackage asahi-audio speakersafetyd tiny-dfr m1n1 \
+                 update-m1n1 dracut-asahi asahi-fwupdate alsa-ucm-asahi asahi-repos \
+                 fedora-asahi-remix-scripts muvm fex-emu; do must_not "$p"; done ;;
+    *)
+        # Apple Silicon: the Asahi hardware stack. Quill never drops these.
+        for p in kernel-16k-core asahi-platform-metapackage asahi-audio speakersafetyd \
+                 tiny-dfr m1n1 update-m1n1 mesa-dri-drivers \
+                 alsa-ucm-asahi dracut-asahi; do must "$p"; done ;;
+esac
 
 # Quill's own branding packages, and none of the Fedora or Asahi ones they replace.
 for p in quill-release-common; do must "$p"; done

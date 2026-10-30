@@ -24,6 +24,7 @@
 	<include from="this://./components/users.xml"/>
 	<include from="this://./platforms/minimal.xml"/>
 	<include from="this://./platforms/workstation.xml"/>
+	<include from="this://./platforms/vm.xml"/>
 	<packages type="bootstrap">
 		<package name="basesystem"/>
 		<package name="filesystem"/>

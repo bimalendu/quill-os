@@ -1,6 +1,9 @@
 <image>
 	<profiles>
-		<profile name="BootCore" description="Boot core packages"/>
+		<profile name="BootCore" description="Boot core packages (Apple Silicon: Asahi kernel, m1n1, U-Boot)">
+			<requires profile="AsahiPlatform"/>
+		</profile>
+		<profile name="BootVM" description="Boot packages for a generic aarch64 UEFI virtual machine"/>
 	</profiles>
 	<packages type="bootstrap" patternType="plusRecommended" profiles="BootCore">
 		<package name="grubby"/>
@@ -19,5 +22,21 @@
 		<package name="asahi-fwupdate" arch="aarch64"/>
 		<package name="dracut-asahi" arch="aarch64"/>
 		<package name="update-m1n1" arch="aarch64"/>
+	</packages>
+	<!-- Quill: generic aarch64 UEFI VM: Fedora's own kernel and GRUB, no Asahi parts. -->
+	<packages type="bootstrap" patternType="plusRecommended" profiles="BootVM">
+		<package name="grubby"/>
+	</packages>
+	<packages type="image" patternType="plusRecommended" profiles="BootVM">
+		<package name="grub2-efi-aa64" arch="aarch64"/>
+		<package name="grub2-efi-aa64-modules" arch="aarch64"/>
+		<package name="shim-signed-aa64" arch="aarch64"/>
+		<package name="kernel"/>
+		<package name="kernel-modules-extra"/>
+		<package name="systemd-oomd-defaults"/>
+		<package name="systemd-resolved"/>
+		<!-- Guest additions for UTM / QEMU: clipboard, display resize, clean shutdown -->
+		<package name="qemu-guest-agent"/>
+		<package name="spice-vdagent"/>
 	</packages>
 </image>

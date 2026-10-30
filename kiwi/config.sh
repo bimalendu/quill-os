@@ -69,12 +69,14 @@ if [[ "$kiwi_profiles" != *"GNOME"* ]] && [[ "$kiwi_profiles" != *"KDE"* ]]; the
 	touch /etc/reconfigSys
 fi
 
-## Enable swap setup on firstboot
-systemctl enable asahi-setup-swap-firstboot.service
+if [[ "$kiwi_profiles" != *"BootVM"* ]]; then
+	## Enable swap setup on firstboot
+	systemctl enable asahi-setup-swap-firstboot.service
 
-## Enable extras install on firstboot; this will only run if the extras are
-## actually present (and self disable afterwards)
-systemctl enable asahi-extras-firstboot.service
+	## Enable extras install on firstboot; this will only run if the extras are
+	## actually present (and self disable afterwards)
+	systemctl enable asahi-extras-firstboot.service
+fi
 
 #======================================
 # Setup default target
@@ -101,12 +103,14 @@ rm -f /var/lib/rpm/__db*
 # Override `DEFAULTKERNEL` in /etc/sysconfig/kernel
 # The file is now owned by grubby
 #======================================
-sed -i 's:\(DEFAULTKERNEL=\)kernel-core:\1kernel-16k-core:' /etc/sysconfig/kernel
+if [[ "$kiwi_profiles" != *"BootVM"* ]]; then
+	sed -i 's:\(DEFAULTKERNEL=\)kernel-core:\1kernel-16k-core:' /etc/sysconfig/kernel
 
-#======================================
-# Generate boot.bin
-#======================================
-update-m1n1 /boot/efi/m1n1/boot.bin
-rm /boot/efi/.builder
+	#======================================
+	# Generate boot.bin
+	#======================================
+	update-m1n1 /boot/efi/m1n1/boot.bin
+	rm /boot/efi/.builder
+fi
 
 exit 0
