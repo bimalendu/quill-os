@@ -12,6 +12,9 @@ OUTVOL         ?= quill-out
 # labels, and kiwi's `rsync -X` then tries to strip the label from the copy,
 # which SELinux never allows.
 SRCVOL         ?= quill-src
+# Local rpm-md repository of Quill packages and the dev key that signs them.
+RPMVOL         ?= quill-rpms
+KEYVOL         ?= quill-keys
 
 # The rootful connection of the dedicated machine, so the user's default
 # podman machine is never touched.
@@ -31,7 +34,7 @@ help:
 	@echo "  make image          build the kiwi image for PROFILE=$(PROFILE)"
 	@echo "  make check-image    assert package expectations on the built image"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
-	@echo "  make rpms           build Quill RPMs                  (Phase 3)"
+	@echo "  make rpms           build, sign and publish packages/ to the local repo"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
 	@echo "  make test           run repository checks"
 	@echo "  make clean          remove build output"
@@ -91,8 +94,14 @@ fetch-image:
 	mkdir -p out
 	$(PODMAN) run --rm -v $(OUTVOL):/out $(BUILDER_IMAGE) tar -C /out -cf - $(PROFILE) | tar -C out -xf -
 
+# Build, sign and publish packages/ as an rpm-md repo in the $(RPMVOL) volume.
+# The dev signing key lives in $(KEYVOL), never in the working tree.
 rpms:
-	@echo "make rpms is implemented in Phase 3 (branding RPMs)"; exit 1
+	-$(PODMAN) volume create $(KEYVOL) >/dev/null
+	-$(PODMAN) volume create $(RPMVOL) >/dev/null
+	COPYFILE_DISABLE=1 tar -C packages -cf - . | $(PODMAN) run --rm -i \
+		-v $(KEYVOL):/keys -v $(RPMVOL):/repo $(BUILDER_IMAGE) \
+		sh -c 'mkdir /src && tar -C /src -xf - && build-rpms'
 
 installer-pkg:
 	@echo "make installer-pkg is implemented in Phase 7 (installer)"; exit 1

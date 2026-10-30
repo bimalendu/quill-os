@@ -13,6 +13,15 @@ RUN dnf -y install \
         jq \
         zip \
         curl \
+        createrepo_c \
+        rpm-sign \
+        gnupg2 \
+        rpmlint \
+        redhat-rpm-config \
+        systemd-rpm-macros \
+        librsvg2-tools \
     && dnf clean all
+
+COPY build-rpms.sh /usr/local/bin/build-rpms
 
 WORKDIR /work
