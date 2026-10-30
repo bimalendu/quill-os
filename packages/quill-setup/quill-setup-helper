@@ -1,0 +1,134 @@
+#!/usr/bin/python3
+"""Install Quill Setup package groups. Runs as root, via pkexec.
+
+    quill-setup-helper [--groups-dir DIR] [--dry-run] install GROUP_ID [GROUP_ID ...]
+    quill-setup-helper [--groups-dir DIR] list
+
+Security model: the caller names GROUPS, never packages. The package names come
+from the root-owned definitions in the groups directory, and are re-validated
+here, so an unprivileged caller cannot make this install arbitrary software.
+
+Progress goes to stdout as one JSON object per line:
+    {"event": "start" | "step" | "log" | "done" | "error", ...}
+"""
+import fcntl
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+GROUPS_DIR = Path("/usr/share/quill-setup/groups")
+LOCK = "/run/quill-setup.lock"
+FLATHUB = "https://dl.flathub.org/repo/flathub.flatpakrepo"
+GROUP_ID = re.compile(r"^[a-z][a-z0-9-]*$")
+RPM_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]*$")
+FLATPAK_ID = re.compile(r"^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+){2,}$")
+ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"}
+
+
+def emit(event, **fields):
+    print(json.dumps({"event": event, **fields}), flush=True)
+
+
+class Refusal(Exception):
+    pass
+
+
+def load_groups(groups_dir):
+    groups = {}
+    for f in sorted(groups_dir.glob("*.json")):
+        g = json.loads(f.read_text())
+        gid = g.get("id")
+        if not isinstance(gid, str) or not GROUP_ID.match(gid) or gid != f.stem:
+            raise Refusal(f"{f.name}: bad group id")
+        for name in g.get("rpm", []):
+            if not isinstance(name, str) or not RPM_NAME.match(name):
+                raise Refusal(f"{f.name}: refusing rpm name {name!r}")
+        for ident in g.get("flatpak", []):
+            if not isinstance(ident, str) or not FLATPAK_ID.match(ident):
+                raise Refusal(f"{f.name}: refusing flatpak id {ident!r}")
+        groups[gid] = g
+    return groups
+
+
+def run(cmd, dry_run):
+    emit("log", line="$ " + " ".join(cmd))
+    if dry_run:
+        return 0
+    proc = subprocess.Popen(cmd, env=ENV, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            text=True, errors="replace")
+    for line in proc.stdout:
+        emit("log", line=line.rstrip())
+    return proc.wait()
+
+
+def install(groups, wanted, dry_run):
+    unknown = [w for w in wanted if w not in groups]
+    if unknown:
+        raise Refusal(f"unknown group(s): {', '.join(unknown)}")
+    rpms, flatpaks = [], []
+    for gid in wanted:
+        rpms += [r for r in groups[gid].get("rpm", []) if r not in rpms]
+        flatpaks += [a for a in groups[gid].get("flatpak", []) if a not in flatpaks]
+
+    emit("start", groups=wanted, rpms=len(rpms), flatpaks=len(flatpaks))
+    if rpms:
+        emit("step", name="Installing packages", fraction=0.1)
+        # "--" ends option parsing: nothing after it can be read as a dnf option.
+        if run(["dnf5", "install", "-y", "--", *rpms], dry_run) != 0:
+            raise RuntimeError("dnf failed to install the selected packages")
+    if flatpaks:
+        emit("step", name="Adding Flathub", fraction=0.6)
+        if run(["flatpak", "remote-add", "--system", "--if-not-exists", "flathub", FLATHUB], dry_run) != 0:
+            raise RuntimeError("could not add the Flathub remote")
+        emit("step", name="Installing Flatpak apps", fraction=0.7)
+        if run(["flatpak", "install", "--system", "--noninteractive", "-y", "flathub", *flatpaks], dry_run) != 0:
+            raise RuntimeError("flatpak failed to install the selected apps")
+    emit("done", fraction=1.0)
+
+
+def main(argv):
+    groups_dir, dry_run = GROUPS_DIR, False
+    args = argv[1:]
+    while args and args[0].startswith("--"):
+        opt = args.pop(0)
+        if opt == "--dry-run":
+            dry_run = True
+        elif opt == "--groups-dir" and args:
+            groups_dir = Path(args.pop(0))
+        else:
+            emit("error", message=f"unknown option {opt}")
+            return 2
+    if not args or args[0] not in ("install", "list"):
+        emit("error", message="usage: quill-setup-helper [--dry-run] install GROUP_ID... | list")
+        return 2
+    command, rest = args[0], args[1:]
+    try:
+        groups = load_groups(groups_dir)
+        if command == "list":
+            for g in sorted(groups.values(), key=lambda g: g["order"]):
+                print(json.dumps({k: g[k] for k in ("id", "name", "description", "order")}))
+            return 0
+        if not rest:
+            raise Refusal("no groups given")
+        if any(not GROUP_ID.match(r) for r in rest):
+            raise Refusal("refusing malformed group id")
+        with open(LOCK if not dry_run else os.devnull, "w") as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                raise Refusal("another Quill Setup install is already running")
+            install(groups, rest, dry_run)
+        return 0
+    except Refusal as e:
+        emit("error", message=str(e), refused=True)
+        return 2
+    except (RuntimeError, ValueError, OSError) as e:
+        emit("error", message=str(e))
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -20,7 +20,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -37,6 +37,7 @@ help:
 	@echo "  make check-no-ai    validate the no-AI Firefox policy against the image"
 	@echo "  make check-firefox  run the image's Firefox headless and assert the no-AI policy"
 	@echo "  make check-group-packages  check the setup groups name real aarch64 packages (network)"
+	@echo "  make check-setup-helper  test the group installer as root with real dnf"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
@@ -129,6 +130,12 @@ check-group-packages:
 	COPYFILE_DISABLE=1 tar -cf - -C out groups -C .. tests/check-group-packages.sh | \
 		$(PODMAN) run --rm -i $(BUILDER_IMAGE) \
 		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/tests/check-group-packages.sh /c/groups'
+
+# Test the privileged installer as root with real dnf (changes only the throwaway container).
+check-setup-helper:
+	COPYFILE_DISABLE=1 tar -cf - -C packages/quill-setup quill-setup-helper groups -C ../.. tests/test-setup-helper.sh | \
+		$(PODMAN) run --rm -i $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/tests/test-setup-helper.sh'
 
 fetch-image:
 	mkdir -p out
