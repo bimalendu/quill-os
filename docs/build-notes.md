@@ -145,3 +145,14 @@ reached 78 GB while the VM used 33 GB, and the Mac fell to 17 GB free (97% full)
 batch of builds, and `make doctor` warns when the Mac has under 25 GB free.
 The VM disk is capped at 80 GB, and the Apple Silicon and VM images are each
 15 to 32 GB while building.
+
+## VM image (Phase 6)
+
+See `docs/vm.md`. `VM-KDE`: 1960 packages, a 3.7 GB qcow2 (32 GiB virtual).
+Checked with `make check-image check-branding check-no-ai check-firefox check-vm`.
+Not booted by the project yet.
+
+The Apple Silicon packages were split out of `Common` into an `AsahiPlatform`
+profile, and the Asahi package repositories now apply only to it. After the
+split the Apple Silicon images are unchanged: `Workstation-KDE` has the same
+2006 package names as before, `Minimal` the same 818.
