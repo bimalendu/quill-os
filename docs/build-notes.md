@@ -128,3 +128,10 @@ See `docs/no-ai-policy.md`. Image checks added: `make check-no-ai` (policy file
 valid against the image's Firefox schema) and `make check-firefox` (the image's
 Firefox started headless; asserts the policy is applied). `make check-image`
 now also runs the denylist gate. `Workstation-KDE`: 2005 packages.
+
+## Quill Setup (Phase 5)
+
+See `docs/quill-setup.md`. `Workstation-KDE`: 2006 packages. `make rpms` now
+builds `quill-setup` from a source tarball it creates from
+`packages/quill-setup/src/`. The builder image gained Qt 6, Kirigami, flatpak,
+polkit and desktop-file-utils.
