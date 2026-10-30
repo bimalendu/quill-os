@@ -20,7 +20,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -35,6 +35,7 @@ help:
 	@echo "  make check-image    assert package expectations on the built image"
 	@echo "  make check-branding assert the built image's on-disk branding"
 	@echo "  make check-no-ai    validate the no-AI Firefox policy against the image"
+	@echo "  make check-firefox  run the image's Firefox headless and assert the no-AI policy"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
@@ -108,6 +109,18 @@ check-no-ai:
 		sh -c 'cat > /tmp/c.sh; d=$$(losetup -P --sector-size 4096 -f --show /out/$(PROFILE)/*.raw); \
 		sleep 1; mkdir -p /m; mount -o ro,subvol=root $${d}p3 /m; \
 		sh /tmp/c.sh /m; rc=$$?; umount /m; losetup -d $$d; exit $$rc' < tests/check-no-ai.sh
+
+# Start the image's own Firefox headless (in a chroot) and assert that the no-AI
+# policy is applied. Slow (about a minute) and needs the built image.
+check-firefox:
+	$(PODMAN) run --rm -i --privileged -v /dev:/dev -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'cat > /tmp/probe.py; d=$$(losetup -P --sector-size 4096 -f --show /out/$(PROFILE)/*.raw); sleep 1; \
+		mkdir -p /m; mount -o ro,subvol=root $${d}p3 /m; rm -rf /ffhome; mkdir -p /ffhome/prof; \
+		mount --bind /ffhome /m/tmp; mount --bind /proc /m/proc; mount --bind /dev /m/dev; \
+		chroot /m /usr/bin/env HOME=/tmp MOZ_HEADLESS=1 MOZ_DISABLE_CONTENT_SANDBOX=1 MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1 \
+			timeout 90 /usr/bin/firefox --headless --no-remote --marionette --profile /tmp/prof about:blank >/tmp/ff.out 2>&1 & \
+		python3 /tmp/probe.py; rc=$$?; pkill -f bin/firefox; sleep 2; \
+		umount /m/dev /m/proc /m/tmp /m; losetup -d $$d; exit $$rc' < tests/probe-firefox.py
 
 fetch-image:
 	mkdir -p out

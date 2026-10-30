@@ -121,3 +121,10 @@ Fedora's Plasma session sets
   -> satyr). The KDE image also gets them. ABRT itself is not installed.
 - Minimal needs its own bootstrap `quill-release`, as KDE does, or dnf
   bootstraps Fedora Asahi Remix's release package and then conflicts.
+
+## No-AI policy (Phase 4)
+
+See `docs/no-ai-policy.md`. Image checks added: `make check-no-ai` (policy file
+valid against the image's Firefox schema) and `make check-firefox` (the image's
+Firefox started headless; asserts the policy is applied). `make check-image`
+now also runs the denylist gate. `Workstation-KDE`: 2005 packages.
