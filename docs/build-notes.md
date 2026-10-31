@@ -104,8 +104,8 @@ Fedora's Plasma session sets
 - The logo (`packages/quill-logos/quill-mark.svg`) is a drawn placeholder.
 - Licenses: artwork CC-BY-SA-4.0, release package MIT, theme GPL-2.0-or-later.
   `Quill-Legal-README.txt` is a draft that needs legal review.
-- Not verified without booting: the login screen wallpaper, Plymouth, and the
-  look of the Plasma session.
+- Seen in the VM on 2026-10-31 (user report): the login screen and the Plasma
+  session look as intended. On Apple Silicon hardware: not yet seen.
 
 ### Image checks
 
@@ -150,7 +150,8 @@ The VM disk is capped at 80 GB, and the Apple Silicon and VM images are each
 
 See `docs/vm.md`. `VM-KDE`: 1960 packages, a 3.7 GB qcow2 (32 GiB virtual).
 Checked with `make check-image check-branding check-no-ai check-firefox check-vm`.
-Not booted by the project yet.
+Booted in UTM on 2026-10-31 (user report): GRUB, Plasma Setup, the Quill login
+screen, the desktop and Quill Setup all appeared and worked.
 
 The Apple Silicon packages were split out of `Common` into an `AsahiPlatform`
 profile, and the Asahi package repositories now apply only to it. After the

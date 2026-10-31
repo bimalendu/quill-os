@@ -57,7 +57,11 @@ interface can only choose among the five groups.
 | `tests/shoot-setup-app.sh` | Builds the app and takes offscreen screenshots of every state. |
 | `make check-branding` | The built image contains the helper, polkit policy, autostart entry and five groups. |
 
-## Not verified without booting
+## Booting
+
+In the VM (2026-10-31, user report) Quill Setup opened after the first login
+and worked. The items below were not checked separately:
+
 
 - The look in a real Plasma session. The screenshots are headless and
   software-rendered, with default fonts and no KWin.

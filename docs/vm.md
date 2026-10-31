@@ -22,8 +22,9 @@ occupies about 3.7 GiB on disk.
 
 ## Run it in UTM
 
-**These steps are written from UTM's documented behaviour and have not been
-tried against this image.** Treat them as a starting point.
+These steps were used to boot the image on 2026-10-31 (UTM on an Apple Silicon
+Mac): it reached Plasma Setup, the Quill login screen, the desktop and the
+Quill Setup window.
 
 1. Install [UTM](https://mac.getutm.app/) (free from the website).
 2. *Create a New Virtual Machine* -> **Virtualize** -> **Other**.
@@ -64,4 +65,4 @@ filesystem (for example `sudo growpart /dev/vda 3` and
   for heavy 3D.
 - No Asahi hardware: audio, Wi-Fi, camera and so on come from the host and
   UTM's virtual devices.
-- Not yet booted by the project: see the checklist in `docs/build-notes.md`.
+- Booted in UTM only; Parallels and VMware Fusion are untested.
