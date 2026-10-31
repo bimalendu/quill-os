@@ -23,7 +23,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm vm-test rpms image fetch-image installer-pkg test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -46,6 +46,7 @@ help:
 	@echo "  make check-vm       static boot-chain checks of the VM image (does not boot it)"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
+	@echo "  make vm-test       boot the VM image under QEMU and test it (VM_TEST=smoke|maintenance)"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
 	@echo "  make test           run repository checks"
 	@echo "  make clean          remove build output"
@@ -181,6 +182,13 @@ rpms:
 	COPYFILE_DISABLE=1 tar -C out/stage -cf - . | $(PODMAN) run --rm -i \
 		-v $(KEYVOL):/keys -v $(RPMVOL):/repo $(BUILDER_IMAGE) \
 		sh -c 'mkdir /src && tar -C /src -xf - && build-rpms'
+
+# Boot a throwaway overlay of the VM image under QEMU (software CPU, no KVM) and
+# run tests/vm/$(VM_TEST).sh against it over SSH. Slow: allow several minutes.
+VM_TEST ?= smoke
+vm-test:
+	COPYFILE_DISABLE=1 tar -cf - tests/vm | $(PODMAN) run --rm -i -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/tests/vm/$(VM_TEST).sh /out/VM-KDE/*.qcow2'
 
 installer-pkg:
 	@echo "make installer-pkg is implemented in Phase 7 (installer)"; exit 1

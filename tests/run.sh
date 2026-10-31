@@ -14,7 +14,7 @@ for f in README.md LICENSE Makefile build/Containerfile build/build-rpms.sh test
     [ -f "$f" ] && ok "file $f" || bad "missing file $f"
 done
 
-for s in tests/*.sh; do
+for s in tests/*.sh tests/vm/*.sh; do
     sh -n "$s" && ok "syntax $s" || bad "syntax $s"
 done
 

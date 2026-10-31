@@ -36,6 +36,10 @@ RUN dnf -y install \
         polkit \
         dracut \
         desktop-file-utils \
+        qemu-system-aarch64-core \
+        qemu-img \
+        edk2-aarch64 \
+        openssh-clients \
     && dnf clean all
 
 COPY build-rpms.sh /usr/local/bin/build-rpms
