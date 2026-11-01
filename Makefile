@@ -23,7 +23,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm vm-test rpms image fetch-image installer-pkg test clean
+.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm vm-test rpms image fetch-image installer-pkg installer-lock check-installer test-bootstrap fetch-installer test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -194,8 +194,42 @@ vm-test:
 		-v $(OUTVOL):/out:ro -v $(RPMVOL):/quill-repo:ro $(BUILDER_IMAGE) \
 		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/tests/vm/$(VM_TEST).sh /out/VM-KDE/*.qcow2'
 
+# The local Apple Silicon installer: a folder holding the KDE and Minimal images, the
+# pinned Asahi installer and install.sh. Built in the $(OUTVOL) volume at /out/installer.
+# Needs both Workstation-KDE and Minimal built, and roughly 20 GB free in the machine.
+INSTALLER_DATE ?= $(shell date +%Y%m%d)
 installer-pkg:
-	@echo "make installer-pkg is implemented in Phase 7 (installer)"; exit 1
+	COPYFILE_DISABLE=1 tar -cf - installer packages/quill-logos | \
+		$(PODMAN) run --rm -i -e FEDORA_RELEASE=$(FEDORA_RELEASE) -v $(OUTVOL):/out $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/installer/assemble.sh build $(INSTALLER_DATE)'
+
+# Move the pinned installer to upstream's newest. Review what changed upstream first.
+installer-lock:
+	{ grep '^#' installer/installer.lock; \
+	  COPYFILE_DISABLE=1 tar -cf - installer | $(PODMAN) run --rm -i -v $(OUTVOL):/out $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/installer/assemble.sh lock'; } > installer/installer.lock.new
+	mv installer/installer.lock.new installer/installer.lock
+	@cat installer/installer.lock
+
+# Inspect the newest installer folder in the volume (read-only; reads the raw images).
+check-installer:
+	COPYFILE_DISABLE=1 tar -cf - installer tests/check-installer.sh tests/check-installer.py | \
+		$(PODMAN) run --rm -i -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && cd /c && sh tests/check-installer.sh'
+
+# Run install.sh in the Linux builder against the real pinned Asahi installer, with a fake
+# macOS around it. Never touches this Mac.
+test-bootstrap:
+	COPYFILE_DISABLE=1 tar -cf - installer tests/test-bootstrap.sh | \
+		$(PODMAN) run --rm -i -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && cd /c && sh tests/test-bootstrap.sh'
+
+# Copy the newest installer folder to ./out/installer/ (about 8-10 GB).
+fetch-installer:
+	mkdir -p out/installer
+	$(PODMAN) run --rm -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) sh -c \
+		'cd /out/installer && d=$$(ls -d quill-os-* | sort | tail -n 1) && tar -cf - $$d' | tar -C out/installer -xf -
+	@ls -d out/installer/quill-os-*
 
 test:
 	@./tests/run.sh

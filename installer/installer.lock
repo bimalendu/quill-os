@@ -1,0 +1,5 @@
+# The Fedora Asahi Remix installer build that Quill OS bundles. It is Asahi's own
+# installer (MIT), unmodified. Change it only with `make installer-lock`, after
+# reading what changed upstream.
+version=0.9.2
+sha256=7968b93cf1b9e22078ee50e6f16b116ae3e7c404ff05dc91f4910b01d3b10af2
