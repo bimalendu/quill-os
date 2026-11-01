@@ -179,9 +179,9 @@ images only) and the `/boot` label fix, and checked:
 
 | Image | Packages | check-image | check-branding | check-no-ai |
 |---|---|---|---|---|
-| VM-KDE | 1970 | pass | pass | pass |
+| VM-KDE | 1970 | pass | not re-run (see below) | not re-run (see below) |
 | Workstation-KDE | 2016 | pass | pass | pass |
 | Minimal | 829 | pass | pass | not applicable: Minimal has no Firefox, so `check-no-ai` (a Firefox policy check) fails by design |
 
-VM-KDE also passes `make vm-test` (smoke and maintenance). The Apple Silicon
+For VM-KDE, only `check-image` was run on the rebuilt image: its raw disk was removed to free space, and `check-branding` and `check-no-ai` read the raw disk. The booted-VM smoke test covers the same ground at runtime (os-release says Quill OS, the Firefox policy is present). VM-KDE also passes `make vm-test` (smoke and maintenance). The Apple Silicon
 images are checked statically only: no Apple Silicon hardware has booted them.
