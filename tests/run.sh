@@ -6,7 +6,7 @@ fail=0
 ok()  { printf 'ok    %s\n' "$1"; }
 bad() { printf 'FAIL  %s\n' "$1"; fail=1; }
 
-for d in build kiwi packages installer policy ci tests docs; do
+for d in build kiwi packages installer policy ci tests docs vm; do
     [ -d "$d" ] && ok "dir $d/" || bad "missing dir $d/"
 done
 
@@ -14,7 +14,7 @@ for f in README.md LICENSE Makefile build/Containerfile build/build-rpms.sh test
     [ -f "$f" ] && ok "file $f" || bad "missing file $f"
 done
 
-for s in tests/*.sh tests/vm/*.sh; do
+for s in tests/*.sh tests/vm/*.sh vm/*.sh; do
     sh -n "$s" && ok "syntax $s" || bad "syntax $s"
 done
 
@@ -29,6 +29,8 @@ sh tests/test-groups.sh >/dev/null && ok "groups self-test" || bad "groups self-
 
 d=$(mktemp -d); python3 tests/check-groups.py --dump "$d" >/dev/null && sh tests/check-denylist.sh policy/ai-denylist.txt --rpms "$d/rpms" --flatpaks "$d/flatpaks" >/dev/null \
     && ok "no setup group contains a denylisted package" || bad "a setup group contains a denylisted package"; rm -rf "$d"
+
+sh tests/test-install-utm.sh >/dev/null && ok "UTM installer self-test (fake osascript)" || bad "UTM installer self-test"
 
 make -n help >/dev/null 2>&1 && ok "Makefile parses" || bad "Makefile does not parse"
 

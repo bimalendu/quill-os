@@ -23,7 +23,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm vm-test rpms image fetch-image installer-pkg installer-lock check-installer test-bootstrap fetch-installer test clean
+.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm vm-test install-vm vm-status uninstall-vm rpms image fetch-image installer-pkg installer-lock check-installer test-bootstrap fetch-installer test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -46,6 +46,9 @@ help:
 	@echo "  make check-vm       static boot-chain checks of the VM image (does not boot it)"
 	@echo "  make fetch-image    copy the built image from the volume to ./out/"
 	@echo "  make rpms           build, sign and publish packages/ to the local repo"
+	@echo "  make install-vm     import the fetched VM image into UTM as 'Quill OS' and start it"
+	@echo "  make vm-status      read-only: state, address and os-release of that VM"
+	@echo "  make uninstall-vm   delete that VM (asks first; only the one install-vm made)"
 	@echo "  make vm-test       boot the VM image under QEMU and test it (VM_TEST=smoke|maintenance)"
 	@echo "  make installer-pkg  package an image for asahi-installer (Phase 7)"
 	@echo "  make test           run repository checks"
@@ -188,6 +191,17 @@ vm-test:
 	COPYFILE_DISABLE=1 tar -cf - tests/vm | $(PODMAN) run --rm -i -e QUILL_INSTALL=$(QUILL_INSTALL) \
 		-v $(OUTVOL):/out:ro -v $(RPMVOL):/quill-repo:ro $(BUILDER_IMAGE) \
 		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/tests/vm/$(VM_TEST).sh /out/VM-KDE/*.qcow2'
+
+# One-command install into UTM on this Mac (see vm/install-utm.sh and docs/vm.md).
+# Needs `make fetch-image PROFILE=VM-KDE` first. Adds exactly one VM, "Quill OS".
+install-vm:
+	@./vm/install-utm.sh install $(INSTALL_VM_ARGS)
+
+vm-status:
+	@./vm/install-utm.sh status
+
+uninstall-vm:
+	@./vm/install-utm.sh uninstall
 
 # The local Apple Silicon installer: a folder holding the KDE and Minimal images, the
 # pinned Asahi installer and install.sh. Built in the $(OUTVOL) volume at /out/installer.
