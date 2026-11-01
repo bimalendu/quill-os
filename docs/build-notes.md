@@ -171,3 +171,17 @@ needs a longer start timeout under emulation; the test sets one.
 `QUILL_INSTALL=1` installs the local `quill-*` packages into an older image
 first. Run `make vm-test VM_TEST=explore` after writing commands to
 `tests/vm/explore.cmds` to try something by hand in a booted guest.
+
+## Rebuild after Phase 7a/7b (2026-11-01)
+
+All three images were rebuilt with `quill-snapshots`, `quill-updates` (KDE
+images only) and the `/boot` label fix, and checked:
+
+| Image | Packages | check-image | check-branding | check-no-ai |
+|---|---|---|---|---|
+| VM-KDE | 1970 | pass | pass | pass |
+| Workstation-KDE | 2016 | pass | pass | pass |
+| Minimal | 829 | pass | pass | not applicable: Minimal has no Firefox, so `check-no-ai` (a Firefox policy check) fails by design |
+
+VM-KDE also passes `make vm-test` (smoke and maintenance). The Apple Silicon
+images are checked statically only: no Apple Silicon hardware has booted them.
