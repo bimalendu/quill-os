@@ -1,0 +1,44 @@
+# Quill OS checks. The same commands run locally: `make test` and `make rpms`.
+# Images are NOT built here: kiwi needs loop devices and tens of GB, and
+# those builds stay local (`make image`) until a runner for them is chosen.
+# Nothing here publishes anything: no COPR, no releases, no secrets.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: repository checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install xmllint
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+      - name: make test
+        run: ./tests/run.sh
+
+  rpms:
+    name: build and sign the Quill RPMs
+    # The packages are built for aarch64, like the images.
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the builder image
+        run: docker build --build-arg FEDORA_RELEASE=44 -t quill-os-builder:f44 -f build/Containerfile build
+      - name: Stage the packages
+        run: ./build/stage-packages.sh out/stage
+      - name: Build, sign and publish them to a throwaway repo
+        # build-rpms creates a throwaway signing key inside the container.
+        run: |
+          tar -C out/stage -cf - . | docker run --rm -i -v "$PWD/out/repo:/repo" quill-os-builder:f44 \
+            sh -c 'mkdir /src && tar -C /src -xf - && build-rpms'
+      - name: Expect all 14 RPMs
+        run: |
+          n=$(ls out/repo/rpms/*.rpm | wc -l)
+          echo "$n RPMs"
+          test "$n" -eq 14

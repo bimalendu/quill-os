@@ -173,12 +173,7 @@ fetch-image:
 rpms:
 	-$(PODMAN) volume create $(KEYVOL) >/dev/null
 	-$(PODMAN) volume create $(RPMVOL) >/dev/null
-	rm -rf out/stage && mkdir -p out/stage
-	cp -R packages/. out/stage/
-	cp policy/ai-denylist.txt out/stage/quill-no-ai/ai-denylist.txt
-	# quill-setup ships a source tarball built from its src/ tree.
-	tar -czf out/stage/quill-setup/quill-setup-44.tar.gz -s ',^src,quill-setup-44,' -C packages/quill-setup src
-	rm -rf out/stage/quill-setup/src
+	./build/stage-packages.sh out/stage
 	COPYFILE_DISABLE=1 tar -C out/stage -cf - . | $(PODMAN) run --rm -i \
 		-v $(KEYVOL):/keys -v $(RPMVOL):/repo $(BUILDER_IMAGE) \
 		sh -c 'mkdir /src && tar -C /src -xf - && build-rpms'
