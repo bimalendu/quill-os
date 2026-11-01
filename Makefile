@@ -23,7 +23,7 @@ KEYVOL         ?= quill-keys
 # podman machine is never touched.
 PODMAN = podman --connection $(MACHINE)-root
 
-.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm vm-test install-vm vm-status uninstall-vm rpms image fetch-image installer-pkg installer-lock check-installer test-bootstrap fetch-installer test clean
+.PHONY: help doctor machine machine-stop reclaim-space builder shell kiwi-version profiles sync-src check-image check-branding check-no-ai check-firefox check-group-packages check-setup-helper check-setup-app check-vm vm-test install-vm vm-status uninstall-vm rpms image fetch-image installer-pkg installer-lock check-installer test-bootstrap fetch-installer installer-refresh test clean
 
 help:
 	@echo "Quill OS build targets"
@@ -239,6 +239,17 @@ fetch-installer:
 	$(PODMAN) run --rm -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) sh -c \
 		'cd /out/installer && d=$$(ls -d quill-os-* | sort | tail -n 1) && tar -cf - $$d' | tar -C out/installer -xf -
 	@ls -d out/installer/quill-os-*
+
+# After editing installer/install.sh or README.txt: refresh the folder in the volume
+# and copy just the three small files that change (install.sh, README.txt, SHA256SUMS)
+# into the local folder, then verify it. Does not rebuild or re-copy the images.
+installer-refresh:
+	COPYFILE_DISABLE=1 tar -cf - installer | $(PODMAN) run --rm -i -v $(OUTVOL):/out $(BUILDER_IMAGE) \
+		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/installer/assemble.sh refresh'
+	@d=$$(ls -d out/installer/quill-os-* 2>/dev/null | sort | tail -n 1); [ -n "$$d" ] || { echo "no local folder: run make fetch-installer first"; exit 1; }; \
+	$(PODMAN) run --rm -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) sh -c \
+		"cd /out/installer/$$(basename $$d) && tar -cf - install.sh README.txt SHA256SUMS" | tar -C "$$d" -xf - && \
+	"$$d/install.sh" --verify
 
 test:
 	@./tests/run.sh

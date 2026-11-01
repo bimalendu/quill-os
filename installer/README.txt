@@ -20,7 +20,9 @@ How to install
 2. Back up your data. The installer resizes macOS to make room.
 3. Open Terminal, then run:   cd "<this folder>" && ./install.sh
    (macOS may ask to let Terminal read the disk the folder is on.)
-   Use  ./install.sh --verify  first to check the folder without installing.
+   First run  ./install.sh --preflight  : it checks the folder and then this Mac
+   (chip, macOS, free space, backup) and changes nothing. Install only if it
+   says READY. (./install.sh --verify checks just the folder.)
 4. Follow the installer's prompts. It will ask how much space to give Quill OS
    and which system to install. It will reboot into the Apple recovery screen once;
    follow the instructions it prints there.

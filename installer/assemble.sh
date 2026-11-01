@@ -3,6 +3,8 @@
 # container with the out volume mounted at /out (read-write).
 #
 #   assemble.sh build DATE     build /out/installer/quill-os-<release>-<DATE>/
+#   assemble.sh refresh [DIR]  re-copy install.sh and README.txt into an existing
+#                              folder (the newest if no DIR) and redo SHA256SUMS
 #   assemble.sh lock           print installer.lock for upstream's newest installer
 set -eu
 
@@ -87,7 +89,16 @@ PY
     echo "assemble: wrote $dir"
     du -sh "$dir"
     ;;
+refresh)
+    dir=${2:-$(ls -d "$out"/quill-os-* 2>/dev/null | sort | tail -n 1)}
+    [ -n "$dir" ] && [ -d "$dir" ] || fail "no installer folder to refresh (build one first)"
+    [ -f "$dir/SHA256SUMS" ] && [ -d "$dir/os" ] || fail "$dir is not an installer folder"
+    cp "$here/install.sh" "$here/README.txt" "$dir/"
+    chmod +x "$dir/install.sh"
+    ( cd "$dir" && find . -type f ! -name SHA256SUMS | sort | xargs sha256sum > SHA256SUMS )
+    echo "assemble: refreshed $dir"
+    ;;
 *)
-    fail "usage: assemble.sh build DATE | lock"
+    fail "usage: assemble.sh build DATE | refresh [DIR] | lock"
     ;;
 esac

@@ -5,7 +5,7 @@
 #
 # Nothing here touches a system path. Every scratch file lives in one mktemp
 # directory, which is removed on exit. The shipped install.sh is not changed:
-# the tests run a copy with exactly two lines rewritten (see "the copy under test").
+# the tests run a copy with exactly three lines rewritten (see "the copy under test").
 fail=0
 ok()  { printf 'ok    %s\n' "$1"; }
 bad() { printf 'FAIL  %s\n' "$1"; fail=1; }
@@ -25,10 +25,12 @@ mkdir "$w/bin" "$w/root" "$w/root/System" "$w/empty-root"
 # --- the copy under test -----------------------------------------------------
 # 1. the macOS marker /System becomes a path inside $w
 # 2. the confirmation prompt reads a file instead of /dev/tty
+# 3. the fake macOS tools (sysctl, df, ...) come first on PATH, ahead of the builder's own
 sed -e 's:\[ ! -e /System \]:[ ! -e "$QUILL_TEST_ROOT/System" ]:' \
+    -e 's|^export PATH="/usr/bin|export PATH="$QUILL_TEST_BIN:/usr/bin|' \
     -e 's:</dev/tty:<"$QUILL_TEST_ANSWER":' installer/install.sh > "$w/install-under-test.sh"
 changed=$(diff installer/install.sh "$w/install-under-test.sh" | grep -c '^<')
-check "the copy under test differs from install.sh in exactly 2 lines" [ "$changed" = 2 ]
+check "the copy under test differs from install.sh in exactly 3 lines" [ "$changed" = 3 ]
 check "install.sh in the folder is the committed one" cmp -s "$src/install.sh" installer/install.sh
 
 # --- a fake macOS toolbox, on PATH for the tests only -------------------------
@@ -48,6 +50,47 @@ cat > "$w/bin/plutil" <<'SH'
 [ "$1 $2 $3 $4" = "-convert xml1 -o /dev/null" ] || { echo "plutil shim: unexpected arguments: $*" >&2; exit 2; }
 shift 4
 python3 -m json.tool "$1" >/dev/null
+SH
+# Fake macOS tools for --preflight. Each answers from FAKE_* variables.
+cat > "$w/bin/sysctl" <<'SH'
+#!/bin/sh
+[ "$1 $2" = "-n machdep.cpu.brand_string" ] || { echo "sysctl shim: unexpected arguments: $*" >&2; exit 2; }
+echo "${FAKE_CHIP:-Apple M1}"
+SH
+cat > "$w/bin/sw_vers" <<'SH'
+#!/bin/sh
+[ "$1" = -productVersion ] || exit 2
+echo "${FAKE_MACOS-14.5}"
+SH
+cat > "$w/bin/df" <<'SH'
+#!/bin/sh
+[ "$1" = -k ] || { echo "df shim: unexpected arguments: $*" >&2; exit 2; }
+echo "Filesystem 1024-blocks Used Available Capacity Mounted"
+echo "fake 0 0 ${FAKE_FREE_KB:-200000000} 0% /"
+SH
+cat > "$w/bin/fdesetup" <<'SH'
+#!/bin/sh
+echo "${FAKE_FV:-FileVault is Off.}"
+SH
+cat > "$w/bin/pmset" <<'SH'
+#!/bin/sh
+echo "Now drawing from '${FAKE_POWER:-AC Power}'"
+SH
+cat > "$w/bin/defaults" <<'SH'
+#!/bin/sh
+[ "$FAKE_TM" = none ] && exit 1
+cat <<'EOT'
+{
+    Destinations =     (
+                {
+            SnapshotDates =             (
+                "2026-10-15 17:00:00 +0000",
+                "2026-10-15 19:04:35 +0000"
+            );
+        }
+    );
+}
+EOT
 SH
 chmod +x "$w/bin/"*
 
@@ -70,7 +113,7 @@ sums() { # FOLDER (a name under $w, or a full path)
 asahi_tmp=$w/asahi-install
 runin() {
     f=$1; shift
-    out=$(env PATH="$w/bin:$PATH" USER=root QUILL_TEST_ROOT="${ROOT:-$w/root}" \
+    out=$(env PATH="$w/bin:$PATH" QUILL_TEST_BIN="$w/bin" USER=root QUILL_TEST_ROOT="${ROOT:-$w/root}" \
         QUILL_INSTALL_TMP="$asahi_tmp" QUILL_TEST_ANSWER="${ANSWER:-$yes}" \
         QUILL_STUB_OUT="$w/stub.out" sh "$f/install.sh" "$@" 2>&1); rc=$?
     out=$(printf '%s\n' "$out" | grep -v 'setlocale')   # the builder has no en_US locale
@@ -127,6 +170,77 @@ else bad "a truncated install.sh ran (rc=$rc): $out"; fi
 ROOT=$w/empty-root runin "$w/good folder" --verify
 if [ "$rc" != 0 ] && says "runs on a Mac"; then ok "--verify refuses to run where there is no /System"
 else bad "ran without a macOS marker (rc=$rc): $out"; fi
+
+# --- 2b. --preflight: reads this Mac, writes nothing -------------------------------
+rc_says() { [ "$rc" = "$1" ] && says "$2"; }   # exit status is N and the output says PATTERN
+lacks() { ! says "$1"; }
+runin_env() { # VAR=value...: like runin, with FAKE_* settings for the shims
+    out=$(env "$@" PATH="$w/bin:$PATH" QUILL_TEST_BIN="$w/bin" USER=root QUILL_TEST_ROOT="$w/root" \
+        QUILL_INSTALL_TMP="$asahi_tmp" QUILL_TEST_ANSWER="$yes" QUILL_STUB_OUT="$w/stub.out" \
+        sh "$w/good folder/install.sh" --preflight 2>&1); rc=$?
+    out=$(printf '%s\n' "$out" | grep -v 'setlocale')
+}
+touch "$w/marker"; sleep 1
+runin_env FAKE_CHIP="Apple M1"
+check "preflight on an M1 with room passes (rc=$rc)" [ "$rc" = 0 ]
+check "  ... says READY" says "^READY\. "
+check "  ... reports the chip" says "chip: Apple M1"
+check "  ... gives the space each system needs" says "Quill OS 44 with KDE Plasma needs 17\.1 GB"
+check "  ... gives the space the Minimal system needs" says "Quill OS 44 Minimal needs 8\.7 GB"
+check "  ... says nothing was installed or changed" says "Nothing was installed or changed"
+check "  ... shows the last backup date" says "last Time Machine backup: 2026-10-15 19:04:35"
+check "  ... created no working directory" [ ! -e "$asahi_tmp" ]
+check "  ... started no installer" [ ! -e "$w/stub.out" ]
+check "  ... wrote nothing into the folder" [ -z "$(find -L "$w/good folder" -newer "$w/marker" 2>/dev/null)" ]
+
+runin_env FAKE_CHIP="Apple M3 Pro"
+check "preflight blocks an M3 (rc=$rc)" [ "$rc" = 1 ]
+check "  ... says NOT READY" says "NOT READY"
+check "  ... points to the VM" says "virtual machine"
+runin_env FAKE_CHIP="Apple M2 Max"
+check "preflight accepts an M2 family chip" [ "$rc" = 0 ]
+runin_env FAKE_CHIP="Intel(R) Core(TM) i7"
+check "preflight blocks an Intel Mac" rc_says 1 "needs an Apple Silicon Mac"
+runin_env FAKE_MACOS=12.6
+check "preflight blocks macOS 12" rc_says 1 "too old"
+runin_env FAKE_MACOS=27.0.1
+check "preflight only warns about macOS 27 (rc=$rc)" rc_says 0 "WARN.*macOS 27.0.1 is newer"
+runin_env FAKE_MACOS=
+check "preflight warns when the macOS version is unknown" rc_says 0 "macOS version unknown"
+
+# 12 GB free: the KDE system (17.1 GB) cannot fit, the Minimal one (8.7 GB) can
+runin_env FAKE_FREE_KB=11700000
+check "with 12 GB free the KDE system is reported as not fitting" says "WARN.*Plasma needs 17\.1 GB; only 12\.0 GB is free, so it cannot be installed"
+check "  ... but Minimal fits, so the Mac is not blocked (rc=$rc)" [ "$rc" = 0 ]
+check "  ... and it warns that macOS would be left with little" says "WARN.*Minimal needs 8\.7 GB; macOS would be left with only"
+runin_env FAKE_FREE_KB=5000000
+check "with 5 GB free nothing fits: blocked (rc=$rc)" rc_says 1 "none of the systems offered fits"
+runin_env FAKE_FREE_KB=30000000
+check "with 30 GB free KDE fits but macOS would keep under 20 GB: warning" says "WARN.*Plasma needs 17\.1 GB; macOS would be left with only 13"
+runin_env FAKE_FREE_KB=40000000
+check "with 41 GB free there is no space warning" lacks "WARN.*needs"
+
+runin_env FAKE_POWER="Battery Power"
+check "preflight warns about battery power (rc=$rc)" rc_says 0 "WARN.*battery"
+runin_env FAKE_TM=none
+check "preflight warns when no backup is found (rc=$rc)" rc_says 0 "WARN.*no Time Machine backup"
+runin_env FAKE_FV="FileVault is On."
+check "preflight mentions FileVault without failing" rc_says 0 "FileVault is On"
+
+mk pf-flipped; sums pf-flipped
+zip=$(ls "$src"/os/*minimal*.zip)
+rm "$w/pf-flipped/os/$(basename "$zip")"; cp "$zip" "$w/pf-flipped/os/"
+printf '\377' | dd of="$w/pf-flipped/os/$(basename "$zip")" bs=1 seek=1000000 conv=notrunc status=none
+runin "$w/pf-flipped" --preflight
+if [ "$rc" != 0 ] && says "do not match SHA256SUMS" && ! says "Checking this Mac"; then ok "--preflight on a damaged folder fails in the checksum step, before reading the Mac"
+else bad "--preflight did not stop on a damaged folder (rc=$rc): $out"; fi
+rm -f "$w/pf-flipped/os/"*.zip
+ROOT=$w/empty-root runin "$w/good folder" --preflight
+if [ "$rc" != 0 ] && says "runs on a Mac"; then ok "--preflight refuses to run where there is no /System"
+else bad "--preflight ran without a macOS marker (rc=$rc): $out"; fi
+runin "$w/good folder" --help
+check "--help lists --preflight" says "--preflight"
+check "the preflight left no /tmp/asahi-install behind" [ ! -e "$asahi_tmp" ]
 
 # --- 3. the full bootstrap with the real pinned Asahi installer -------------------
 # Repack the pinned tarball with its install.sh swapped for a stub. The stub records
