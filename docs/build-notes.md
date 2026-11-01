@@ -208,3 +208,29 @@ all checks re-run after the fix.
 
 Not tested: partitioning, m1n1, Apple's recovery step, and booting. These need
 an M1 or M2 Mac.
+
+## Phase 9: one-command install on this Mac (2026-11-01)
+
+The distribution stays on this machine, so publishing (GitHub, CI, COPR, a real
+signing key) is shelved and the work went into making local installation easy.
+
+| Step | Check | Result |
+|---|---|---|
+| Fresh VM image | `make fetch-image PROFILE=VM-KDE` | sha256 `c04844a8...e6607` equals the volume copy; 1970 packages, including quill-snapshots and quill-updates; `qemu-img check` clean. The copy in `out/` had been the stale 30 Oct image (1960 packages). `make check-vm` could not run: it needs the raw disk, which was removed from the volume earlier. The image passed `make vm-test` before. |
+| `vm/install-utm.sh` | `tests/test-install-utm.sh` (fake `osascript`) | 74 ok, 0 FAIL. Negative cases: existing VM named Quill OS, flipped byte, missing image, missing checksum, missing UTM, Intel Mac, low disk, bad memory and CPU values, stale id file, UTM failure, unknown option, and every uninstall guard (no id, answer other than `yes`, running VM, id of a differently named VM). Five mutations of the script (substring name match, any answer deletes, delete while running, no checksum, delete any name) are each caught. |
+| AppleScript terms | `osacompile` against UTM 4.7.5's dictionary | All 8 embedded scripts compile; UTM was not launched. |
+| Real import on this Mac | `make install-vm INSTALL_VM_ARGS=--no-start` | VM "Quill OS" created with the intended settings (4096 MiB, 4 cores, UEFI, hypervisor, VirtIO, virtio-gpu-gl-pci, shared network, notes carry the sha). Centos and Windows config files unchanged (same modification times). A second `make install-vm` refused. `make vm-status` reports `stopped`. |
+| `install.sh --preflight` | `make test-bootstrap` | 65 ok, 0 FAIL (25 new). Two mutations (M3 allowed, no block when nothing fits) are caught. |
+| `--preflight` on this Mac | read-only | READY with one warning (macOS 27.0.1 is newer than the installer has been checked against). M1 supported; KDE needs 17.1 GB and would leave macOS 31.2 GB free; Minimal 8.7 GB, 39.6 GB left; FileVault on; last Time Machine backup 15 Oct. No file written, no `/tmp/asahi-install`. |
+
+Bugs found by the tests along the way: a `fail` inside `$(...)` only left the
+subshell, so `uninstall` carried on with an empty id (now `|| exit 1`); and in
+macOS's `sh`, `VAR=x function` assignments persist, which leaked test settings
+between cases (the test now clears them). `tmutil latestbackup` tries to mount
+the backup destination, so the pre-flight reads Time Machine's preferences
+instead.
+
+Not tested: booting the imported VM from `make install-vm` and `vm-status`
+through the guest agent of a real running guest (the VM was imported without
+starting; the guest-agent calls are covered by the fake only), and everything
+native: partitioning, m1n1, Apple's recovery step and booting the result.

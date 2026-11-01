@@ -20,7 +20,30 @@ branding, the no-AI policy and the first-login Quill Setup picker.
 The result is `Quill-OS.aarch64-<version>.qcow2`: a 32 GiB virtual disk that
 occupies about 3.7 GiB on disk.
 
-## Run it in UTM
+## One command
+
+With [UTM](https://mac.getutm.app/) installed and the image fetched
+(`make fetch-image PROFILE=VM-KDE`):
+
+    make install-vm        # import and start
+    make vm-status         # read-only: state, address, os-release from inside the guest
+    make uninstall-vm      # delete the VM (asks you to type yes)
+
+`install-vm` creates one VM named **Quill OS** through UTM's scripting interface
+(4096 MiB, 4 cores, UEFI, VirtIO disk and network, virtio-gpu-gl-pci display; set
+`QUILL_VM_MEMORY` and `QUILL_VM_CPUS` to change the first two, and add
+`INSTALL_VM_ARGS=--no-start` to import without starting). Before it changes anything it
+checks that the image matches its `.sha256`, that 8 GB are free, and that UTM has no VM
+named Quill OS yet; it refuses otherwise. It never touches your other VMs. UTM stores its
+own copy of the disk (about 5.3 GB), so `out/VM-KDE/` can be deleted afterwards.
+`uninstall-vm` deletes only the VM whose id `install-vm` saved in `out/utm-vm-id`, and
+refuses a running VM.
+
+The first run makes macOS ask whether Terminal may control UTM; allow it.
+
+## Run it in UTM by hand
+
+The same result without the script:
 
 These steps were used to boot the image on 2026-10-31 (UTM on an Apple Silicon
 Mac): it reached Plasma Setup, the Quill login screen, the desktop and the
@@ -45,7 +68,8 @@ the **Quill Setup** window offering software groups.
 
 ## Where the image comes from, and what to check
 
-`make check-vm` runs 26 static checks on the image (it does not boot it): the
+`make check-vm` runs 26 static checks on the image (it does not boot it; it needs the
+raw disk, which `make image` leaves in the build volume until space is reclaimed): the
 qcow2 is consistent and identical to the raw disk, the UEFI fallback loader
 `EFI/BOOT/BOOTAA64.EFI` exists, the boot entry names the stock kernel and the
 right root UUID, `/etc/fstab` matches the partitions, the drivers needed to
