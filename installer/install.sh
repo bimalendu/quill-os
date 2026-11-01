@@ -58,7 +58,7 @@ if [ ! -f "installer-$PKG_VER.tar.gz" ]; then
     return 1
 fi
 if command -v plutil >/dev/null 2>&1; then
-    plutil -lint installer_data.json >/dev/null || { echo "installer_data.json is not valid." >&2; return 1; }
+    plutil -convert xml1 -o /dev/null installer_data.json 2>/dev/null || { echo "installer_data.json is not valid." >&2; return 1; }
 fi
 # every package named in installer_data.json must be here
 for pkg in $(sed -n 's/.*"package": *"\([^"]*\)".*/\1/p' installer_data.json); do

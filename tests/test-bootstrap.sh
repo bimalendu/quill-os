@@ -44,7 +44,9 @@ exec sha256sum "$@"
 SH
 cat > "$w/bin/plutil" <<'SH'
 #!/bin/sh
-[ "$1" = -lint ] && shift
+# only the form install.sh uses: plutil -convert xml1 -o /dev/null FILE
+[ "$1 $2 $3 $4" = "-convert xml1 -o /dev/null" ] || { echo "plutil shim: unexpected arguments: $*" >&2; exit 2; }
+shift 4
 python3 -m json.tool "$1" >/dev/null
 SH
 chmod +x "$w/bin/"*
