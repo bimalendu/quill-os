@@ -44,6 +44,7 @@ Source26:       80-kde-desktop.preset
 Source27:       81-desktop.preset
 Source25:       plasma-desktop.conf
 Source31:       20-quill-defaults.conf
+Source32:       quill-boot-labels.conf
 
 BuildRequires:  redhat-rpm-config > 121-1
 BuildRequires:  systemd-rpm-macros
@@ -246,6 +247,9 @@ install -Dm0644 %{SOURCE12} -t %{buildroot}%{_prefix}/lib/systemd/user-preset/
 install -Dm0644 %{SOURCE13} -t %{buildroot}%{_prefix}/lib/systemd/system-preset/
 install -Dm0644 %{SOURCE13} -t %{buildroot}%{_prefix}/lib/systemd/user-preset/
 
+# SELinux labels for /boot
+install -Dm0644 %{SOURCE32} -t %{buildroot}%{_prefix}/lib/tmpfiles.d/
+
 # DNF 5 defaults
 install -Dm0644 %{SOURCE31} -t %{buildroot}%{_prefix}/share/dnf5/libdnf.conf.d/
 
@@ -265,6 +269,8 @@ install -pm 0644 %{SOURCE1} licenses/LICENSE
 for f in %{buildroot}%{_prefix}/lib/os-release.basic %{buildroot}%{_prefix}/lib/os-release.kde-desktop; do
     (. "$f"; test "$ID" = quill && test "$ID_LIKE" = fedora && test "$VERSION_ID" = "%{dist_version}")
 done
+# /boot is relabelled at every boot (see the file for why).
+grep -qx 'Z /boot - - -' %{SOURCE32}
 
 
 %files
@@ -295,6 +301,7 @@ done
 %{_prefix}/lib/systemd/system-preset/90-default.preset
 %{_prefix}/lib/systemd/system-preset/99-default-disable.preset
 %{_prefix}/share/dnf5/libdnf.conf.d/20-quill-defaults.conf
+%{_prefix}/lib/tmpfiles.d/quill-boot-labels.conf
 %dir %{_datadir}/dnf/plugins
 %{_datadir}/dnf/plugins/copr.vendor.conf
 

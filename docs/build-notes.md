@@ -9,6 +9,7 @@ there needed five workarounds. Each one is in the repo; this explains why.
 | `setfiles: Could not set context ... Invalid argument` | The VM (Fedora CoreOS) policy lacks modules such as mysql, so the kernel rejects labels the image's own policy uses. | `selinux=0` kernel argument on `quill-build` only. Undo with `rpm-ostree kargs --delete=selinux=0`. |
 | `Device /dev/loop0p1 does not exist` | A container's static `/dev` never gets partition nodes after `losetup -P`. | `-v /dev:/dev` in `KIWI_RUN`. |
 | `Cannot download ibus-m17n ... All mirrors were tried` | Package was in Fedora `updates` metadata but missing from every mirror (2026-10-30). | `<ignore name="ibus-m17n"/>`; remove once Fedora fixes the repo. |
+| `/boot` files unlabelled (`unlabeled_t`): logind denied reading the boot entry | Files created while the image is assembled (`grub.cfg`, the boot entry, `lost+found`) get no SELinux label when the builder has SELinux off, as here and on CI runners. | `quill-release-common` ships `/usr/lib/tmpfiles.d/quill-boot-labels.conf` (`Z /boot - - -`), which restores the labels at every boot. `make vm-test` checks the labels and that there are no denials. |
 | `kiwi-ng --version` exits 1 | kiwi 11 exits 1 for `--version` and `--help`. | `make kiwi-version` checks the output, not the exit code. |
 
 Also: `kiwi-ng image info --resolve-package-list` cannot expand `$releasever`
@@ -157,3 +158,16 @@ The Apple Silicon packages were split out of `Common` into an `AsahiPlatform`
 profile, and the Asahi package repositories now apply only to it. After the
 split the Apple Silicon images are unchanged: `Workstation-KDE` has the same
 2006 package names as before, `Minimal` the same 818.
+
+## Testing the VM image without a GUI (`make vm-test`)
+
+`make vm-test` boots the qcow2 under QEMU in the build machine, with no KVM
+(software emulation, about 2.5 minutes to SSH). The test key and `sshd` are
+passed as systemd credentials, so the image is not modified. Two tests:
+`smoke` (the system is healthy) and `maintenance` (snapshots, background
+update downloads, rollback with a reboot; about 35 minutes under emulation).
+QEMU gets 2 GiB: more gets it killed in the 4 GiB build machine. PackageKit
+needs a longer start timeout under emulation; the test sets one.
+`QUILL_INSTALL=1` installs the local `quill-*` packages into an older image
+first. Run `make vm-test VM_TEST=explore` after writing commands to
+`tests/vm/explore.cmds` to try something by hand in a booted guest.

@@ -19,6 +19,8 @@ check "graphical target is the default" 'test "$(systemctl get-default)" = graph
 check "display manager is active"       'systemctl is-active -q display-manager.service'
 check "root is the btrfs subvolume root" 'findmnt -n -o FSTYPE,OPTIONS / | grep -q "^btrfs .*subvol=/root"'
 check "Firefox no-AI policy installed"  'test -s /usr/lib64/firefox/distribution/policies.json'
+check "/boot files carry SELinux labels"  'test -z "$(restorecon -nRv /boot 2>/dev/null)" || { restorecon -nRv /boot; exit 1; }'
+check "no SELinux denials during boot"  'd=$(journalctl -b -o cat | grep "avc:  denied"); test -z "$d" || { echo "$d" | tail -5; exit 1; }'
 check "network is online"               'systemctl is-active -q network-online.target && getent hosts fedoraproject.org >/dev/null'
 
 vm_ssh 'echo "info  idle memory used: $(free -m | awk "/^Mem:/ {print \$3}") MiB; boot: $(systemd-analyze 2>/dev/null | head -1)"'
