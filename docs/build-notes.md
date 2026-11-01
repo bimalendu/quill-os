@@ -185,3 +185,26 @@ images only) and the `/boot` label fix, and checked:
 
 For VM-KDE, only `check-image` was run on the rebuilt image: its raw disk was removed to free space, and `check-branding` and `check-no-ai` read the raw disk. The booted-VM smoke test covers the same ground at runtime (os-release says Quill OS, the Firefox policy is present). VM-KDE also passes `make vm-test` (smoke and maintenance). The Apple Silicon
 images are checked statically only: no Apple Silicon hardware has booted them.
+
+## Phase 7c: the local-folder installer (2026-11-01)
+
+`make installer-pkg` built `quill-os-44-20261101` (4.9 GB: the KDE and Minimal
+zips, `installer_data.json`, the pinned Asahi installer 0.9.2, `install.sh`,
+`SHA256SUMS`). Nothing was installed on the build Mac, and no system folder
+was created or changed on it or in the builder.
+
+| Check | Result |
+|---|---|
+| `make check-installer` | 74 ok, 0 FAIL: structure, ESP fix, byte-identical images, hashes, four bad-JSON cases and a wrong-hash lock |
+| `make test-bootstrap` | 34 ok, 0 FAIL: `--verify` rejects a flipped zip byte, an edited JSON, a missing zip (two ways), invalid JSON, no `SHA256SUMS`, no tarball, a truncated script and a missing `/System`; the full bootstrap runs with the real tarball and `load_package()` opens both packages; a relative `REPO_BASE` is rejected |
+| `install.sh --verify` on macOS | rc 0, "Nothing was installed"; no file in the folder changed and no `/tmp/asahi-install*` appeared |
+| Tampered APFS clones on macOS (flipped byte, edited JSON, missing zip) | each rejected with rc 1; clones deleted |
+
+The Mac run found a bug the container could not: macOS `plutil -lint` rejects
+JSON, so a valid `installer_data.json` failed. `install.sh` now uses
+`plutil -convert xml1 -o /dev/null`, and the test's `plutil` shim accepts only
+that form so the same mistake cannot pass again. The folder was rebuilt and
+all checks re-run after the fix.
+
+Not tested: partitioning, m1n1, Apple's recovery step, and booting. These need
+an M1 or M2 Mac.
