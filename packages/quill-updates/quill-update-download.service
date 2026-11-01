@@ -1,0 +1,15 @@
+[Unit]
+Description=Download system and Flatpak updates (installs nothing)
+Documentation=file:///usr/share/doc/quill-updates/README.md
+Wants=network-online.target
+After=network-online.target
+# Not on battery. True when the machine has no battery (desktops, VMs).
+ConditionACPower=true
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/quill-update-download
+# Never hang: each step inside is bounded, this is the outer limit.
+TimeoutStartSec=3h
+Nice=19
+IOSchedulingClass=idle

@@ -1,0 +1,15 @@
+#!/bin/sh
+# First boot: create the snapper configuration for the root filesystem.
+# Only for the Fedora layout Quill OS uses: / is the btrfs subvolume "root".
+set -eu
+[ -f /etc/snapper/configs/root ] && exit 0
+
+fstype=$(findmnt -n -o FSTYPE /)
+[ "$fstype" = btrfs ] || { echo "/ is $fstype, not btrfs: snapshots stay off"; exit 0; }
+fsroot=$(findmnt -n -o FSROOT /)
+[ "$fsroot" = /root ] || { echo "/ is the subvolume $fsroot, not /root: snapshots stay off"; exit 0; }
+
+snapper --no-dbus -c root create-config --template quill /
+snapper --no-dbus -c root create --cleanup-algorithm number --userdata important=yes \
+    --description "First boot"
+echo "snapper configured for /"

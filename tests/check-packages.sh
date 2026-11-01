@@ -26,7 +26,7 @@ case "$profile" in
 esac
 
 # Quill's own branding packages, and none of the Fedora or Asahi ones they replace.
-for p in quill-release-common; do must "$p"; done
+for p in quill-release-common quill-snapshots snapper libdnf5-plugin-actions; do must "$p"; done
 for p in fedora-logos fedora-release-common fedora-release-kde fedora-release-identity-kde \
          fedora-asahi-remix-release-common fedora-asahi-remix-release-kde-desktop \
          fedora-bookmarks abrt abrt-desktop libreport-fedora mediawriter \
@@ -43,7 +43,7 @@ case "$profile" in
         for p in plasma-desktop plasma-setup plasma-login-manager dolphin konsole kwrite okular \
                  kcalc gwenview firefox quill-release-kde-desktop quill-release-identity-kde-desktop \
                  quill-backgrounds-kde quill-plasma-theme quill-logos quill-no-ai quill-setup \
-                 mesa-vulkan-drivers; do must "$p"; done
+                 quill-updates mesa-vulkan-drivers; do must "$p"; done
         for p in f44-backgrounds-kde f44-backgrounds-base desktop-backgrounds-kde \
                  breeze-icon-theme-fedora plasma-welcome-fedora kde-settings-plasmalogin; do
             must_not "$p"; done ;;

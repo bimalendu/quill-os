@@ -10,7 +10,9 @@
 
 VM_DIR=${VM_DIR:-/vm}
 VM_PORT=${VM_PORT:-2222}
-VM_MEM=${VM_MEM:-3072}
+# 2 GiB: QEMU must fit in the 4 GiB build machine with room to spare (3 GiB
+# got QEMU OOM-killed during dnf). The guest has zram swap.
+VM_MEM=${VM_MEM:-2048}
 VM_CPUS=${VM_CPUS:-4}
 VM_BOOT_TIMEOUT=${VM_BOOT_TIMEOUT:-900}
 EDK2=/usr/share/edk2/aarch64

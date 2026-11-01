@@ -1,0 +1,37 @@
+#!/bin/sh
+# dnf5 actions hook (see quill-snapper.actions). Never fails a transaction:
+# every path exits 0, and snapper errors are logged, not raised.
+#   quill-snapshot pre PID        create a pre snapshot, print its number
+#   quill-snapshot post PID N     create the matching post snapshot
+CONFIG=root
+phase=${1:-}
+pid=${2:-}
+pre=${3:-}
+
+[ -f /etc/snapper/configs/$CONFIG ] || exit 0
+command -v snapper >/dev/null 2>&1 || exit 0
+
+description() {
+    cmd=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null)
+    case $cmd in
+        *packagekitd*) cmd="PackageKit (Discover)" ;;
+        "") cmd="package transaction" ;;
+    esac
+    printf '%.80s' "${cmd% }"
+}
+
+case $phase in
+pre)
+    n=$(snapper -c $CONFIG create --type pre --print-number --cleanup-algorithm number \
+        --description "$(description)" 2>&1) || { echo "log.WARNING=quill-snapshot: $n"; exit 0; }
+    case $n in ''|*[!0-9]*) exit 0 ;; esac
+    echo "tmp.quill_snapshot_pre=$n"
+    ;;
+post)
+    case $pre in ''|*[!0-9]*) exit 0 ;; esac
+    out=$(snapper -c $CONFIG create --type post --pre-number "$pre" --cleanup-algorithm number \
+        --description "$(description)" 2>&1) || echo "log.WARNING=quill-snapshot: $out"
+    echo "tmp.quill_snapshot_pre"
+    ;;
+esac
+exit 0

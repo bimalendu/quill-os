@@ -12,6 +12,8 @@
 		<package name="NetworkManager-wifi"/>
 		<package name="chrony"/>
 		<package name="glibc-all-langpacks"/>
+		<!-- Quill: snapshots before and after package transactions, quill-rollback -->
+		<package name="quill-snapshots"/>
 		<ignore name="dracut-config-rescue"/>
 		<ignore name="generic-release*"/>
 		<ignore name="generic-logos*"/>

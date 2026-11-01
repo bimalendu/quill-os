@@ -1,0 +1,14 @@
+[Unit]
+Description=Set up snapshots of the root filesystem
+Documentation=file:///usr/share/doc/quill-snapshots/README.md
+ConditionPathExists=!/etc/snapper/configs/root
+After=local-fs.target
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/quill-snapshots-setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

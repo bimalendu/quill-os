@@ -1,0 +1,170 @@
+#!/bin/bash
+# quill-rollback: return the system to a snapper snapshot.
+#
+#   quill-rollback list             list the snapshots of /
+#   quill-rollback to N [--yes]     make snapshot N the system from the next boot
+#   quill-rollback cleanup [--yes]  delete the systems kept by earlier rollbacks
+#
+# Quill OS keeps Fedora's layout: / is the btrfs subvolume "root", mounted with
+# subvol=root, /home is a separate subvolume and /boot a separate ext4
+# partition. A rollback therefore swaps subvolumes instead of using
+# "snapper rollback" (which needs the default-subvolume layout):
+#
+#   1. root.new  <- writable snapshot of .snapshots/N/snapshot
+#   2. nested subvolumes of root (.snapshots, /var/lib/machines, ...) move
+#      into root.new, since snapshots do not contain them
+#   3. root and root.new are exchanged atomically (renameat2 RENAME_EXCHANGE)
+#   4. the previous system is renamed root.old-<date>
+#
+# Every step leaves a bootable "root". /home and /boot are not rolled back;
+# if the default kernel has no modules in the snapshot, the newest kernel that
+# does becomes the default boot entry.
+set -euo pipefail
+
+CONFIG=root
+TOP=
+
+die() { echo "quill-rollback: $*" >&2; exit 1; }
+note() { echo "quill-rollback: $*"; }
+
+usage() {
+    sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'
+    exit "${1:-2}"
+}
+
+need_root() { [ "$(id -u)" -eq 0 ] || die "run as root: sudo quill-rollback $*"; }
+
+check_layout() {
+    [ "$(findmnt -n -o FSTYPE /)" = btrfs ] || die "/ is not btrfs"
+    [ -f /etc/snapper/configs/$CONFIG ] || die "snapshots are not set up (no snapper config '$CONFIG')"
+}
+
+# The kernel reports the current name of the subvolume mounted at /, so after
+# a rollback (before the reboot) this is root.old-<date>, not /root.
+pending_rollback() { [ "$(findmnt -n -o FSROOT /)" != /root ]; }
+
+mount_top() {
+    TOP=$(mktemp -d /run/quill-rollback.XXXXXX)
+    mount -o subvolid=5 UUID="$(findmnt -n -o UUID /)" "$TOP"
+    trap 'umount "$TOP" 2>/dev/null; rmdir "$TOP" 2>/dev/null' EXIT
+}
+
+confirm() {
+    [ "$YES" = 1 ] && return 0
+    read -r -p "$1 [y/N] " a
+    case $a in y|Y|yes|YES) return 0 ;; *) die "cancelled" ;; esac
+}
+
+# Detects a running dnf. A Discover (PackageKit) update in progress is not
+# detected: do not roll back while Discover is installing.
+transaction_running() { pgrep -x dnf5 >/dev/null || pgrep -x dnf >/dev/null; }
+
+# Subvolumes whose parent is root, as paths relative to root.
+nested_subvolumes() {
+    local id
+    id=$(btrfs subvolume show "$TOP/root" | awk '/Subvolume ID:/ {print $3}')
+    btrfs subvolume list "$TOP" | awk -v id="$id" '$7 == id { sub(/^root\//, "", $9); print $9 }'
+}
+
+# If the default boot entry's kernel has no modules in the new root, make the
+# newest kernel that has them the default.
+fix_default_kernel() {
+    local entries saved default_ver e ver best
+    entries=$(ls /boot/loader/entries/*.conf 2>/dev/null) || return 0
+    saved=$(grub2-editenv list 2>/dev/null | sed -n 's/^saved_entry=//p')
+    if [ -n "$saved" ] && [ -f "/boot/loader/entries/$saved.conf" ]; then
+        default_ver=$(awk '$1 == "version" {print $2}' "/boot/loader/entries/$saved.conf")
+    else
+        default_ver=$(awk '$1 == "version" {print $2}' $entries | sort -V | tail -1)
+    fi
+    [ -d "$TOP/root/usr/lib/modules/$default_ver" ] && return 0
+
+    best=$(for e in $entries; do
+        ver=$(awk '$1 == "version" {print $2}' "$e")
+        if [ -d "$TOP/root/usr/lib/modules/$ver" ]; then echo "$ver $(basename "$e" .conf)"; fi
+    done | sort -V | tail -1 | cut -d' ' -f2)
+    if [ -z "$best" ]; then
+        note "WARNING: no installed kernel has modules in snapshot; the default kernel ($default_ver) may boot without drivers"
+        return 0
+    fi
+    grub2-set-default "$best"
+    note "kernel $default_ver is newer than the snapshot; the default boot entry is now $best"
+}
+
+cmd_list() {
+    check_layout
+    snapper -c $CONFIG list --columns number,type,date,description,userdata
+}
+
+cmd_to() {
+    local n=${1:-} desc ts sub
+    case $n in ''|*[!0-9]*) usage ;; esac
+    [ "$n" -gt 0 ] || die "snapshot 0 is the running system"
+    need_root to "$n"
+    check_layout
+    pending_rollback && die "a rollback is waiting for a reboot (/ is $(findmnt -n -o FSROOT /)); reboot first"
+    transaction_running && die "a package transaction is running; wait for it to finish"
+    mount_top
+
+    [ -d "$TOP/root/.snapshots/$n/snapshot" ] || die "no snapshot $n (see: quill-rollback list)"
+    desc=$(snapper --csvout --no-headers -c $CONFIG list --columns number,date,description |
+        awk -F, -v n="$n" '$1 == n { $1 = ""; sub(/^ /, ""); print }')
+    note "snapshot $n: ${desc:-(no description)}"
+    note "/home and your files are not changed. Everything else returns to snapshot $n."
+    confirm "Make snapshot $n the system after the next reboot?"
+
+    [ -e "$TOP/root.new" ] && die "$TOP/root.new exists (an interrupted rollback?); remove it with: btrfs subvolume delete $TOP/root.new"
+    ts=$(date +%Y%m%d-%H%M%S)
+
+    btrfs subvolume snapshot "$TOP/root/.snapshots/$n/snapshot" "$TOP/root.new" >/dev/null
+    while read -r sub; do
+        [ -n "$sub" ] || continue
+        if [ -d "$TOP/root.new/$sub" ]; then
+            rmdir "$TOP/root.new/$sub" 2>/dev/null || { note "WARNING: /$sub is not empty in the snapshot; left in the old system"; continue; }
+        else
+            mkdir -p "$(dirname "$TOP/root.new/$sub")"
+        fi
+        mv -T "$TOP/root/$sub" "$TOP/root.new/$sub"
+    done < <(nested_subvolumes)
+
+    mv -T --exchange "$TOP/root.new" "$TOP/root"
+    mv -T "$TOP/root.new" "$TOP/root.old-$ts"
+    fix_default_kernel
+
+    note "done. Reboot to start snapshot $n."
+    note "The previous system is kept as root.old-$ts; remove it with: sudo quill-rollback cleanup"
+}
+
+cmd_cleanup() {
+    local olds current o
+    need_root cleanup
+    check_layout
+    mount_top
+    current=$(findmnt -n -o FSROOT /); current=${current#/}
+    olds=$(cd "$TOP" && ls -d root.old-* 2>/dev/null || true)
+    [ -n "$olds" ] || { note "nothing to clean up"; return 0; }
+    for o in $olds; do
+        if [ "$o" = "$current" ]; then note "keeping $o: it is the running system (reboot first)"; continue; fi
+        confirm "Delete the old system $o?"
+        btrfs subvolume delete -R "$TOP/$o" >/dev/null
+        note "deleted $o"
+    done
+}
+
+YES=0
+args=()
+for a in "$@"; do
+    case $a in
+        -y|--yes) YES=1 ;;
+        -h|--help) usage 0 ;;
+        *) args+=("$a") ;;
+    esac
+done
+set -- "${args[@]+"${args[@]}"}"
+
+case ${1:-} in
+    list) cmd_list ;;
+    to) shift; cmd_to "$@" ;;
+    cleanup) cmd_cleanup ;;
+    *) usage ;;
+esac

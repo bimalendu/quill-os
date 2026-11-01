@@ -1,0 +1,41 @@
+#!/bin/sh
+# Download system and Flatpak updates in the background. Installs nothing:
+# Discover notifies about the updates and applies system updates on the next
+# reboot (offline updates), using the packages downloaded here.
+set -u
+
+# NetworkManager's global metered state: 1 = yes, 3 = guessed yes.
+metered=$(busctl get-property org.freedesktop.NetworkManager /org/freedesktop/NetworkManager \
+    org.freedesktop.NetworkManager Metered 2>/dev/null | awk '{print $2}')
+case $metered in
+    1|3) echo "metered connection: not downloading updates"; exit 0 ;;
+esac
+
+rc=0
+# pkcon exit code 5 means "nothing to do" (for example, no updates).
+# Output is kept and logged when a step fails, so the journal says why.
+# Not "pkcon --background": PackageKit cancels background transactions as soon
+# as anything interactive (the Discover notifier's own refresh) wants the
+# queue, and pkcon then waits forever for a transaction that is gone. The
+# unit's Nice/IOSchedulingClass already keep this out of the way, and every
+# call is bounded by timeout(1).
+pk() { timeout 30m pkcon --noninteractive "$@" 2>&1; }
+
+out=$(pk refresh)
+r=$?; [ $r -eq 0 ] || [ $r -eq 5 ] || { echo "refreshing package metadata failed ($r): $out" | tail -n 5; rc=1; }
+out=$(pk --only-download update)
+r=$?
+case $r in
+    0) echo "system updates downloaded; apply them from Discover" ;;
+    5) echo "no system updates" ;;
+    *) echo "downloading system updates failed ($r): $out" | tail -n 5; rc=1 ;;
+esac
+
+if command -v flatpak >/dev/null 2>&1 && [ -n "$(flatpak remotes --system 2>/dev/null)" ]; then
+    if flatpak update --system --noninteractive --no-deploy >/dev/null 2>&1; then
+        echo "Flatpak updates downloaded (not deployed)"
+    else
+        echo "downloading Flatpak updates failed"; rc=1
+    fi
+fi
+exit $rc

@@ -1,0 +1,4 @@
+# Quill OS: updates are downloaded daily, so remind about them daily.
+# Users change this in System Settings > Software Update.
+[Global]
+RequiredNotificationInterval=86400

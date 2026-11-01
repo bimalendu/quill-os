@@ -185,9 +185,13 @@ rpms:
 
 # Boot a throwaway overlay of the VM image under QEMU (software CPU, no KVM) and
 # run tests/vm/$(VM_TEST).sh against it over SSH. Slow: allow several minutes.
+# QUILL_INSTALL=1 installs the newest Quill RPMs (make rpms) into the booted
+# image first, to test packages before rebuilding the image.
 VM_TEST ?= smoke
+QUILL_INSTALL ?= 0
 vm-test:
-	COPYFILE_DISABLE=1 tar -cf - tests/vm | $(PODMAN) run --rm -i -v $(OUTVOL):/out:ro $(BUILDER_IMAGE) \
+	COPYFILE_DISABLE=1 tar -cf - tests/vm | $(PODMAN) run --rm -i -e QUILL_INSTALL=$(QUILL_INSTALL) \
+		-v $(OUTVOL):/out:ro -v $(RPMVOL):/quill-repo:ro $(BUILDER_IMAGE) \
 		sh -c 'mkdir /c && tar -C /c -xf - && sh /c/tests/vm/$(VM_TEST).sh /out/VM-KDE/*.qcow2'
 
 installer-pkg:

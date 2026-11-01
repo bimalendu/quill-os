@@ -1,0 +1,6 @@
+# Quill OS: a snapper snapshot before and after every package transaction,
+# whichever tool runs it (dnf, Discover through PackageKit, Quill Setup).
+# The pre hook prints "tmp.quill_snapshot_pre=<number>", which the post hook
+# receives. host-only: not run for --installroot transactions (image builds).
+pre_transaction:::enabled=host-only:/usr/libexec/quill-snapshot pre ${pid}
+post_transaction:::enabled=host-only:/usr/libexec/quill-snapshot post ${pid} ${tmp.quill_snapshot_pre}

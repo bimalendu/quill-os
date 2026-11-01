@@ -1,0 +1,4 @@
+enable quill-snapshots-setup.service
+enable snapper-cleanup.timer
+disable snapper-timeline.timer
+disable snapper-boot.timer

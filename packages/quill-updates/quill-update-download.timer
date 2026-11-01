@@ -1,0 +1,11 @@
+[Unit]
+Description=Download updates daily
+
+[Timer]
+OnBootSec=15min
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

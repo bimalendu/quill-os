@@ -69,7 +69,7 @@ for path, ident in (("%{SOURCE3}", "org.quill.desktop"), ("%{SOURCE5}", "org.qui
     assert json.load(open(path))["KPlugin"]["Id"] == ident, path
 PY
 # No Breeze blue may survive in the derived colour schemes.
-! grep -q '61,174,233' %{SOURCE1} %{SOURCE2}
+if grep -q '61,174,233' %{SOURCE1} %{SOURCE2}; then exit 1; fi
 
 
 %files
